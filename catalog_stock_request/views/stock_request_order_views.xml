@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="stock_request_order_form_catalog" model="ir.ui.view">
+        <field name="name">stock.request.order.form.catalog</field>
+        <field name="model">stock.request.order</field>
+        <field name="inherit_id" ref="stock_request.stock_request_order_form" />
+        <field name="arch" type="xml">
+            <field name="route_id" position="after">
+                <field
+                    name="split_purchase"
+                    readonly="state != 'draft'"
+                />
+                <field
+                    name="purchase_route_id"
+                    readonly="state != 'draft'"
+                    invisible="not split_purchase"
+                    options="{'no_create': True}"
+                />
+            </field>
+            <xpath expr="//field[@name='stock_request_ids']/list/field[@name='name']" position="before">
+                <control>
+                    <create string="Add a line" />
+                    <button
+                        name="action_add_from_catalog"
+                        string="Catalog"
+                        type="object"
+                        class="btn-link"
+                        context="{'order_id': parent.id}"
+                    />
+                </control>
+            </xpath>
+            <xpath expr="//field[@name='stock_request_ids']/list/field[@name='product_uom_qty']" position="after">
+                <field name="free_qty" optional="show" />
+                <field name="qty_reserved" optional="show" />
+                <field name="qty_to_purchase" optional="show" />
+                <field name="suggested_supplier_id" optional="show" />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="stock_request_order_tree_catalog" model="ir.ui.view">
+        <field name="name">stock.request.order.list.catalog</field>
+        <field name="model">stock.request.order</field>
+        <field name="inherit_id" ref="stock_request.stock_request_order_tree" />
+        <field name="arch" type="xml">
+            <field name="state" position="before">
+                <field name="purchase_count" string="RFQs" optional="show" />
+            </field>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,164 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* catalog_stock_request
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: catalog_stock_request
+#: code:addons/catalog_stock_request/models/stock_request.py:0
+msgid ""
+"No internal supply route found for product %(product)s to location "
+"%(location)s."
+msgstr ""
+
+#. module: catalog_stock_request
+#: code:addons/catalog_stock_request/models/stock_request.py:0
+msgid ""
+"No supplier found for product %(product)s, but %(qty)s %(uom)s still need "
+"to be purchased."
+msgstr ""
+
+#. module: catalog_stock_request
+#: code:addons/catalog_stock_request/models/stock_request.py:0
+msgid "Route %(route)s has no buy rule for warehouse %(warehouse)s."
+msgstr ""
+
+#. module: catalog_stock_request
+#: code:addons/catalog_stock_request/models/stock_request.py:0
+msgid ""
+"You cannot cancel this request because the following purchase orders are "
+"already confirmed: %(orders)s. Cancel them first."
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,field_description:catalog_stock_request.field_res_partner__supplier_rank
+msgid "Supplier Ranking"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,help:catalog_stock_request.field_res_partner__supplier_rank
+msgid ""
+"Manual supplier ranking used to suggest purchase suppliers for stock "
+"requests. Lower values have priority (0 = no priority)."
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,field_description:catalog_stock_request.field_stock_request__free_qty
+msgid "Free To Use"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,help:catalog_stock_request.field_stock_request__free_qty
+msgid "Free quantity in the warehouse stock location."
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,field_description:catalog_stock_request.field_stock_request__qty_reserved
+msgid "Reserved Quantity"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,help:catalog_stock_request.field_stock_request__qty_reserved
+msgid "Quantity reserved by the internal transfer of this request."
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,field_description:catalog_stock_request.field_stock_request__qty_to_purchase
+msgid "Quantity To Purchase"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,help:catalog_stock_request.field_stock_request__qty_to_purchase
+msgid ""
+"Missing quantity that will be purchased (estimated in draft, real once "
+"confirmed)."
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,field_description:catalog_stock_request.field_stock_request__qty_from_stock
+msgid "Quantity From Stock"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,field_description:catalog_stock_request.field_stock_request__qty_purchased
+msgid "Purchased Quantity"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,field_description:catalog_stock_request.field_stock_request__suggested_supplier_id
+msgid "Suggested Supplier"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,help:catalog_stock_request.field_stock_request__suggested_supplier_id
+msgid ""
+"Supplier suggested according to the manual partner ranking and the vendor "
+"pricelists of the product."
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,field_description:catalog_stock_request.field_stock_request_order__split_purchase
+msgid "Split Stock / Purchase"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,help:catalog_stock_request.field_stock_request_order__split_purchase
+msgid ""
+"If enabled, confirming this order reserves the free stock available in the "
+"warehouse and creates RFQs only for the missing quantities."
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,field_description:catalog_stock_request.field_stock_request_order__purchase_route_id
+msgid "Purchase Route"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,help:catalog_stock_request.field_stock_request_order__purchase_route_id
+msgid ""
+"Route used to purchase the missing quantity of the request lines when "
+"confirming this order."
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.ui.view,arch_db:catalog_stock_request.stock_request_order_form_catalog
+msgid "Add a line"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.ui.view,arch_db:catalog_stock_request.stock_request_order_form_catalog
+msgid "Catalog"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.ui.view,arch_db:catalog_stock_request.stock_request_order_tree_catalog
+msgid "RFQs"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.actions.act_window,name:catalog_stock_request.supply_request_order_action
+#: model:ir.ui.menu,name:catalog_stock_request.supply_request_order_menu
+msgid "Solicitudes de abastecimiento"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.actions.act_window,help:catalog_stock_request.supply_request_order_action
+msgid "Crear una solicitud de abastecimiento"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.actions.act_window,help:catalog_stock_request.supply_request_order_action
+msgid ""
+"Al confirmar, el stock libre del almacén se reserva en una transferencia "
+"interna y el faltante genera RFQs agrupadas por proveedor según el ranking "
+"manual."
+msgstr ""
