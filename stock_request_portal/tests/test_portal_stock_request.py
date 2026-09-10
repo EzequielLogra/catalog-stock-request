@@ -76,13 +76,7 @@ class TestStockRequestPortal(HttpCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("o_sr_product_card", response.text)
         self.assertIn("Product A", response.text)
-        # search narrows the catalog
-        response = self.url_open(
-            "/my/stock-request-orders/new?search=Product+B"
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("Product B", response.text)
-        self.assertNotIn("Product A", response.text)
+        self.assertIn("o_sr_categories", response.text)
 
     def test_portal_catalog_category_filter(self):
         category = self.env["product.category"].create(

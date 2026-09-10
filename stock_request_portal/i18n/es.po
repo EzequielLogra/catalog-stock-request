@@ -278,23 +278,13 @@ msgstr "A comprar"
 
 #. module: stock_request_portal
 #: code:addons/stock_request_portal/views/portal_templates.xml:0
-msgid "Search product..."
-msgstr "Buscar producto..."
-
-#. module: stock_request_portal
-#: code:addons/stock_request_portal/views/portal_templates.xml:0
-msgid "Search"
-msgstr "Buscar"
-
-#. module: stock_request_portal
-#: code:addons/stock_request_portal/views/portal_templates.xml:0
 msgid "Add"
 msgstr "Agregar"
 
 #. module: stock_request_portal
 #: code:addons/stock_request_portal/views/portal_templates.xml:0
-msgid "No products found matching your search."
-msgstr "No se encontraron productos que coincidan con la búsqueda."
+msgid "No products found."
+msgstr "No se encontraron productos."
 
 #. module: stock_request_portal
 #: code:addons/stock_request_portal/views/portal_templates.xml:0

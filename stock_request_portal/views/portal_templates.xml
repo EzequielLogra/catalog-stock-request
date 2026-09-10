@@ -158,7 +158,7 @@
                         <a
                             class="btn btn-sm"
                             t-att-class="'btn-primary' if not category_id else 'btn-outline-primary'"
-                            t-attf-href="/my/stock-request-orders/new{{ '?search=' + search if search else '' }}"
+                            href="/my/stock-request-orders/new"
                         >
                             All
                         </a>
@@ -166,35 +166,12 @@
                             <a
                                 class="btn btn-sm"
                                 t-att-class="'btn-primary' if category_id == category.id else 'btn-outline-primary'"
-                                t-attf-href="/my/stock-request-orders/new?category_id={{ category.id }}{{ '&amp;search=' + search if search else '' }}"
+                                t-attf-href="/my/stock-request-orders/new?category_id={{ category.id }}"
                             >
                                 <t t-out="category.display_name" />
                             </a>
                         </t>
                     </div>
-
-                    <form
-                        method="get"
-                        action="/my/stock-request-orders/new"
-                        class="mb-3"
-                    >
-                        <input type="hidden" name="category_id" t-att-value="category_id or ''" />
-                        <div class="input-group">
-                            <input
-                                type="text"
-                                name="search"
-                                class="form-control"
-                                placeholder="Search product..."
-                                t-att-value="search or ''"
-                            />
-                            <button
-                                type="submit"
-                                class="btn btn-outline-primary"
-                            >
-                                <i class="fa fa-search" /> Search
-                            </button>
-                        </div>
-                    </form>
 
                     <form
                         method="POST"
@@ -250,7 +227,7 @@
                             </t>
                             <div t-if="not products" class="col-12">
                                 <div class="alert alert-info" role="alert">
-                                    No products found matching your search.
+                                    No products found.
                                 </div>
                             </div>
                         </div>
