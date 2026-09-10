@@ -77,19 +77,21 @@ class TestStockRequestPortal(HttpCase):
         self.assertIn("o_sr_product_card", response.text)
         self.assertIn("Product A", response.text)
         self.assertIn("o_sr_categories", response.text)
+        self.assertIn("data-category-id", response.text)
 
-    def test_portal_catalog_category_filter(self):
+    def test_portal_catalog_renders_all_products_and_category_chips(self):
         category = self.env["product.category"].create(
             {"name": "Insumos Category"}
         )
         self.product_b.categ_id = category
         self.authenticate("portal_client", "P0rtalClient1!")
-        response = self.url_open(
-            f"/my/stock-request-orders/new?category_id={category.id}"
-        )
+        response = self.url_open("/my/stock-request-orders/new")
         self.assertEqual(response.status_code, 200)
+        # all products travel in the page for client-side filtering
+        self.assertIn("Product A", response.text)
         self.assertIn("Product B", response.text)
-        self.assertNotIn("Product A", response.text)
+        # category chip with its display name is rendered
+        self.assertIn("Insumos Category", response.text)
 
     def test_portal_user_can_create_order(self):
         self.authenticate("portal_client", "P0rtalClient1!")

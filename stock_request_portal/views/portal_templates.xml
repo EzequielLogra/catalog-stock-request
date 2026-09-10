@@ -151,28 +151,6 @@
                         </div>
                     </t>
 
-                    <div
-                        class="mb-2 d-flex flex-wrap gap-1"
-                        id="o_sr_categories"
-                    >
-                        <a
-                            class="btn btn-sm"
-                            t-att-class="'btn-primary' if not category_id else 'btn-outline-primary'"
-                            href="/my/stock-request-orders/new"
-                        >
-                            All
-                        </a>
-                        <t t-foreach="categories" t-as="category">
-                            <a
-                                class="btn btn-sm"
-                                t-att-class="'btn-primary' if category_id == category.id else 'btn-outline-primary'"
-                                t-attf-href="/my/stock-request-orders/new?category_id={{ category.id }}"
-                            >
-                                <t t-out="category.display_name" />
-                            </a>
-                        </t>
-                    </div>
-
                     <form
                         method="POST"
                         action="/my/stock-request-orders/new"
@@ -198,29 +176,63 @@
                             />
                         </div>
 
-                         <div class="row mb-2">
+                        <div
+                            class="o_sr_category_bar bg-body-tertiary rounded-3 p-2 mb-3 d-flex flex-wrap gap-2 align-items-center"
+                            id="o_sr_categories"
+                            t-if="products"
+                        >
+                            <button
+                                type="button"
+                                class="btn btn-sm rounded-pill o_sr_category_chip active"
+                                data-category-id=""
+                            >
+                                All
+                                <span
+                                    class="badge rounded-pill o_sr_chip_count"
+                                    t-out="len(products)"
+                                />
+                            </button>
+                            <t t-foreach="categories" t-as="cat_info">
+                                <t t-set="cat" t-value="cat_info['category']" />
+                                <t t-set="cat_count" t-value="cat_info['count']" />
+                                <button
+                                    type="button"
+                                    class="btn btn-sm rounded-pill o_sr_category_chip"
+                                    t-att-data-category-id="cat.id"
+                                >
+                                    <t t-out="cat.display_name" />
+                                    <span
+                                        class="badge rounded-pill o_sr_chip_count"
+                                        t-out="cat_count"
+                                    />
+                                </button>
+                            </t>
+                        </div>
+
+                        <div class="row mb-2">
                             <t t-foreach="products" t-as="product">
                                 <div class="col-6 col-md-4 col-lg-3 mb-3">
                                     <div
                                         class="card h-100 o_sr_product_card"
+                                        t-att-data-category-id="product.categ_id.id"
                                         t-att-data-product-id="product.id"
                                         t-att-data-product-name="product.display_name"
                                     >
-                                        <div class="card-body">
-                                            <h6 class="card-title mb-1">
+                                        <div class="card-body d-flex flex-column">
+                                            <h6 class="card-title mb-1 fw-bold">
                                                 <t t-out="product.display_name" />
                                             </h6>
-                                            <div t-if="product.default_code" class="small text-muted">
+                                            <div t-if="product.default_code" class="small text-muted mb-2">
                                                 <t t-out="product.default_code" />
                                             </div>
-                                        </div>
-                                        <div class="card-footer text-center bg-transparent border-0 pb-3">
-                                            <button
-                                                type="button"
-                                                class="btn btn-primary btn-sm o_sr_add_product"
-                                            >
-                                                <i class="fa fa-plus" /> Add
-                                            </button>
+                                            <div class="mt-auto pt-2">
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-sm btn-outline-primary w-100 o_sr_add_product"
+                                                >
+                                                    <i class="fa fa-plus me-1" /> Add
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -232,32 +244,43 @@
                             </div>
                         </div>
 
-                        <t t-if="pager" t-call="website.pager" />
-
-                        <h5 class="mt-4">Order lines</h5>
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>Product</th>
-                                        <th class="text-end">Quantity</th>
-                                        <th />
-                                    </tr>
-                                </thead>
-                                <tbody id="stock_request_lines">
-                                    <tr id="o_sr_no_lines" class="text-muted">
-                                        <td colspan="3">
-                                            Add products to your request from
-                                            the catalog above.
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="card mt-4 o_sr_lines_card">
+                            <div class="card-header bg-transparent d-flex align-items-center gap-2">
+                                <h5 class="card-title mb-0 fs-6">
+                                    Order lines
+                                    <span
+                                        class="badge rounded-pill text-bg-primary"
+                                        id="o_sr_line_count"
+                                    >0</span>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Product</th>
+                                                <th class="text-end">Quantity</th>
+                                                <th />
+                                            </tr>
+                                        </thead>
+                                        <tbody id="stock_request_lines">
+                                            <tr id="o_sr_no_lines" class="text-muted">
+                                                <td colspan="3">
+                                                    Add products to your
+                                                    request from the catalog
+                                                    above.
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
 
                         <button
                             type="submit"
-                            class="btn btn-primary"
+                            class="btn btn-primary mt-3"
                             t-att-disabled="not location and 'disabled'"
                         >
                             Submit Request

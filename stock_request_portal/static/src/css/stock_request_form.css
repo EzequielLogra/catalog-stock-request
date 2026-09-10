@@ -1,3 +1,4 @@
+/* Portal home card icon */
 #portal_stock_request_category .o_portal_icon img {
     width: 64px;
     height: 64px;
@@ -5,8 +6,59 @@
     max-height: 64px;
 }
 
+/* Category bar */
+.o_sr_category_bar {
+    border: 1px solid rgba(var(--bs-body-color-rgb), 0.1);
+}
+
+.o_sr_category_chip {
+    text-transform: none;
+    font-weight: 500;
+    border: 1px solid rgba(var(--bs-body-color-rgb), 0.15);
+    background: var(--bs-body-bg);
+}
+
+.o_sr_category_chip .o_sr_chip_count {
+    background-color: rgba(var(--bs-body-color-rgb), 0.15);
+    color: inherit;
+    margin-inline-start: 0.25rem;
+}
+
+.o_sr_category_chip.active {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: #fff;
+}
+
+.o_sr_category_chip.active .o_sr_chip_count {
+    background-color: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+/* Product cards */
 .o_sr_product_card {
-    max-width: 16rem;
-    margin: 0 auto;
-    width: 100%;
+    border: 1px solid rgba(var(--bs-body-color-rgb), 0.125);
+    transition: box-shadow 0.15s ease-in-out, transform 0.15s ease-in-out,
+        border-color 0.15s ease-in-out;
+}
+
+.o_sr_product_card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.o_sr_product_card.o_sr_added {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 1px var(--bs-primary) inset;
+}
+
+.o_sr_product_card.o_sr_added .o_sr_add_product {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: #fff;
+}
+
+/* Order lines card */
+.o_sr_lines_card .card-header {
+    border-bottom: 1px solid rgba(var(--bs-body-color-rgb), 0.125);
 }

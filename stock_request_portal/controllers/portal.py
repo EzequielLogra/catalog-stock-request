@@ -12,7 +12,6 @@ from odoo.addons.portal.controllers.portal import (
 class CustomerPortal(CustomerPortal):
 
     _stock_request_items_per_page = 20
-    _stock_request_catalog_page_size = 30
 
     # ------------------------------------------------------------------
     # Tools
@@ -63,68 +62,40 @@ class CustomerPortal(CustomerPortal):
         )
 
     def _get_stock_request_categories(self):
+        """Return [{"category": record, "count": int}, ...] for the catalog
+        chips, alphabetically by category."""
         groups = request.env["product.product"].sudo()._read_group(
             [("type", "in", ["product", "consu"])],
             groupby=["categ_id"],
             aggregates=["__count"],
         )
-        categ_ids = [categ.id for categ, count in groups if categ]
-        return request.env["product.category"].sudo().search(
-            [("id", "in", categ_ids)],
+        counts = {
+            categ.id: count for categ, count in groups if categ
+        }
+        categories = request.env["product.category"].sudo().search(
+            [("id", "in", list(counts))],
             order="complete_name asc",
         )
+        return [
+            {"category": category, "count": counts[category.id]}
+            for category in categories
+        ]
 
-    def _get_stock_request_catalog_domain(self, category=None):
-        domain = [("type", "in", ["product", "consu"])]
-        if category:
-            domain.append(("categ_id", "child_of", category.id))
-        return domain
+    def _get_stock_request_products(self):
+        return request.env["product.product"].sudo().search(
+            [("type", "in", ["product", "consu"])],
+            order="categ_id.complete_name asc, name asc",
+        )
 
-    def _prepare_stock_request_form_values(
-        self, error=None, category_id=None, page=1
-    ):
+    def _prepare_stock_request_form_values(self, error=None):
         values = self._prepare_portal_layout_values()
-        warehouse = self._get_stock_request_warehouse()
-        Product = request.env["product.product"].sudo()
-        category = request.env["product.category"]
-        if category_id:
-            try:
-                category = (
-                    request.env["product.category"]
-                    .sudo()
-                    .browse(int(category_id))
-                    .exists()
-                )
-            except (TypeError, ValueError):
-                category = request.env["product.category"]
-        domain = self._get_stock_request_catalog_domain(category)
-        url_args = {}
-        if category:
-            url_args["category_id"] = category.id
-        pager_values = portal_pager(
-            url="/my/stock-request-orders/new",
-            total=Product.search_count(domain),
-            page=page,
-            step=self._stock_request_catalog_page_size,
-            url_args=url_args,
-        )
-        products = Product.search(
-            domain,
-            order="name asc",
-            limit=self._stock_request_catalog_page_size,
-            offset=pager_values["offset"],
-        )
         values.update(
             {
                 "page_name": "stock_request_order_new",
                 "error": error,
-                "products": products,
+                "products": self._get_stock_request_products(),
                 "categories": self._get_stock_request_categories(),
-                "category": category,
-                "category_id": category.id or None,
-                "pager": pager_values,
-                "default_url": "/my/stock-request-orders/new",
-                "warehouse": warehouse,
+                "warehouse": self._get_stock_request_warehouse(),
                 "location": self._get_stock_request_destination_location(),
                 "default_expected_date": fields.Datetime.now()
                 .replace(microsecond=0)
@@ -250,12 +221,8 @@ class CustomerPortal(CustomerPortal):
         methods=["GET"],
         sitemap=False,
     )
-    def portal_stock_request_order_new(
-        self, error=None, category_id=None, page=1, **kwargs
-    ):
-        values = self._prepare_stock_request_form_values(
-            error=error, category_id=category_id, page=page
-        )
+    def portal_stock_request_order_new(self, error=None, **kwargs):
+        values = self._prepare_stock_request_form_values(error=error)
         return request.render(
             "stock_request_portal.portal_stock_request_order_new", values
         )
