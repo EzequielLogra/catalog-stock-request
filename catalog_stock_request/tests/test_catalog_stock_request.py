@@ -1,4 +1,4 @@
-from odoo import fields
+from odoo import Command, fields
 from odoo.exceptions import UserError
 
 from odoo.addons.stock_request_purchase.tests.test_stock_request_purchase import (
@@ -186,6 +186,43 @@ class TestSplitPurchase(TestStockRequestPurchase):
         )
         with self.assertRaises(UserError):
             order.action_confirm()
+
+    def test_purchase_obra_internal_requester(self):
+        order = self._create_order({"product_id": self.product.id})
+        order.action_confirm()
+        purchase = order.stock_request_ids.sudo().purchase_ids
+        self.assertEqual(len(purchase), 1)
+        self.assertIn(order.name, purchase.origin)
+        self.assertIn(self.ward_location.complete_name, purchase.origin)
+        self.assertNotIn("(", purchase.origin)
+        self.assertEqual(purchase.obra_location_id, self.ward_location)
+
+    def test_purchase_obra_portal_client(self):
+        client = self.env["res.partner"].create(
+            {"name": "Hospital Sur SA", "is_company": True}
+        )
+        portal_user = self.env["res.users"].create(
+            {
+                "name": "Portal Obra User",
+                "login": "portal_obra_user",
+                "email": "obra@example.com",
+                "partner_id": client.id,
+                "group_ids": [
+                    Command.set([self.env.ref("base.group_portal").id])
+                ],
+            }
+        )
+        order = self._create_order(
+            {"product_id": self.product.id, "requested_by": portal_user.id},
+            requested_by=portal_user.id,
+        )
+        order.action_confirm()
+        purchase = order.stock_request_ids.sudo().purchase_ids
+        self.assertEqual(len(purchase), 1)
+        self.assertIn(order.name, purchase.origin)
+        self.assertIn(self.ward_location.complete_name, purchase.origin)
+        self.assertIn(f"({client.name})", purchase.origin)
+        self.assertEqual(purchase.obra_location_id, self.ward_location)
 
     def test_no_split_standard_behavior(self):
         self._set_stock(self.product, 12.0)

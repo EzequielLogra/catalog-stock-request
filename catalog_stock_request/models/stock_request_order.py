@@ -34,6 +34,16 @@ class StockRequestOrder(models.Model):
                     order.warehouse_id.buy_pull_id.route_id
                 )
 
+    def _get_purchase_origin_label(self):
+        """Label used as purchase order origin, e.g.
+        'SRO/2026/001 - WH/Stock/Obras/Pabellon 3 (Hospital Sur)'."""
+        self.ensure_one()
+        label = f"{self.name} - {self.location_id.complete_name}"
+        client = self.requested_by.partner_id.commercial_partner_id
+        if self.requested_by.share and client:
+            label = f"{label} ({client.name})"
+        return label
+
     def _default_order_line_values(self, child_field=False):
         default_data = super()._default_order_line_values(child_field)
         new_default_data = (

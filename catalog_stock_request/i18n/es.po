@@ -165,3 +165,19 @@ msgstr "Catálogo"
 #: model:ir.ui.view,arch_db:catalog_stock_request.stock_request_order_tree_catalog
 msgid "RFQs"
 msgstr "RFQ"
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,field_description:catalog_stock_request.field_purchase_order__obra_location_id
+#: model:ir.ui.view,arch_db:catalog_stock_request.view_purchase_order_filter_obra
+#: model:ir.ui.view,arch_db:catalog_stock_request.purchase_order_view_search_obra
+msgid "Obra"
+msgstr "Obra"
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,help:catalog_stock_request.field_purchase_order__obra_location_id
+msgid ""
+"Destination location of the stock request order that generated this "
+"purchase. Empty for manual purchases."
+msgstr ""
+"Ubicación destino de la orden de solicitud que generó esta compra. Vacía "
+"para compras manuales."

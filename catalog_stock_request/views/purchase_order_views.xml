@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- List views: Obra column next to Source Document -->
+    <record id="purchase_order_tree_obra" model="ir.ui.view">
+        <field name="name">purchase.order.list.obra.catalog</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//list/field[@name='origin']" position="after">
+                <field name="obra_location_id" optional="show" />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_order_kpis_tree_obra" model="ir.ui.view">
+        <field name="name">purchase.order.kpis.list.obra.catalog</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_kpis_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//list/field[@name='origin']" position="after">
+                <field name="obra_location_id" optional="show" />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_order_view_tree_obra" model="ir.ui.view">
+        <field name="name">purchase.order.view.list.obra.catalog</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//list/field[@name='origin']" position="after">
+                <field name="obra_location_id" optional="show" />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Form: Obra next to the origin in Other Information -->
+    <record id="purchase_order_form_obra" model="ir.ui.view">
+        <field name="name">purchase.order.form.obra.catalog</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form" />
+        <field name="arch" type="xml">
+            <xpath
+                expr="//group[@name='other_info']/field[@name='origin']"
+                position="after"
+            >
+                <field name="obra_location_id" />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- RFQ search view: field + group by obra -->
+    <record id="view_purchase_order_filter_obra" model="ir.ui.view">
+        <field name="name">request.quotation.select.obra.catalog</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_filter" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='origin']" position="after">
+                <field name="obra_location_id" />
+            </xpath>
+            <xpath expr="//group" position="inside">
+                <filter
+                    string="Obra"
+                    name="group_by_obra"
+                    domain="[]"
+                    context="{'group_by': 'obra_location_id'}"
+                />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Purchase Orders search view: field + group by obra -->
+    <record id="purchase_order_view_search_obra" model="ir.ui.view">
+        <field name="name">purchase.order.select.obra.catalog</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_search" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_id']" position="after">
+                <field name="obra_location_id" />
+            </xpath>
+            <xpath expr="//group" position="inside">
+                <filter
+                    string="Obra"
+                    name="group_by_obra"
+                    domain="[]"
+                    context="{'group_by': 'obra_location_id'}"
+                />
+            </xpath>
+        </field>
+    </record>
+</odoo>
