@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <!-- Breadcrumbs -->
+    <template
+        id="portal_breadcrumbs_stock_request"
+        name="Portal breadcrumbs: stock request orders"
+        inherit_id="portal.portal_breadcrumbs"
+        priority="40"
+    >
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li
+                t-if="page_name == 'stock_request_order' and not order"
+                class="breadcrumb-item active"
+            >
+                Stock Requests
+            </li>
+            <li
+                t-if="order or page_name == 'stock_request_order_new'"
+                class="breadcrumb-item"
+            >
+                <a t-attf-href="/my/stock-request-orders">Stock Requests</a>
+            </li>
+            <li t-if="order" class="breadcrumb-item active">
+                <t t-out="order.name" />
+            </li>
+            <li
+                t-if="page_name == 'stock_request_order_new'"
+                class="breadcrumb-item active"
+            >
+                New
+            </li>
+        </xpath>
+    </template>
+
+    <!-- /my home card -->
+    <template
+        id="portal_my_home_stock_request"
+        name="Portal My Home: stock request orders"
+        inherit_id="portal.portal_my_home"
+        priority="40"
+    >
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+            <t t-set="portal_client_category_enable" t-value="True" />
+        </xpath>
+        <div id="portal_client_category" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">Stock Requests</t>
+                <t t-set="url" t-value="'/my/stock-request-orders'" />
+                <t t-set="text">Create and follow your stock requests</t>
+                <t t-set="placeholder_count" t-value="'stock_request_order_count'" />
+            </t>
+        </div>
+    </template>
+
+    <!-- Orders list -->
+    <template id="portal_my_stock_request_orders" name="My Stock Requests">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True" />
+
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Stock Requests</t>
+            </t>
+
+            <div t-if="not orders" class="alert alert-warning" role="alert">
+                There are currently no stock requests for your account.
+            </div>
+            <t t-if="orders" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Reference</th>
+                        <th class="text-end">Created on</th>
+                        <th class="text-end">Expected Date</th>
+                        <th class="text-end">Lines</th>
+                        <th class="text-center">Status</th>
+                    </tr>
+                </thead>
+                <t t-foreach="orders" t-as="order">
+                    <tr>
+                        <td>
+                            <a t-attf-href="/my/stock-request-orders/{{ order.id }}">
+                                <t t-out="order.name" />
+                            </a>
+                        </td>
+                        <td class="text-end">
+                            <span t-field="order.create_date" t-options="{'widget': 'datetime'}" />
+                        </td>
+                        <td class="text-end">
+                            <span t-field="order.expected_date" t-options="{'widget': 'datetime'}" />
+                        </td>
+                        <td class="text-end">
+                            <t t-out="order.stock_request_count" />
+                        </td>
+                        <td class="text-center">
+                            <span
+                                t-if="order.state == 'draft'"
+                                class="badge rounded-pill text-bg-secondary"
+                            >To Review</span>
+                            <span
+                                t-elif="order.state == 'open'"
+                                class="badge rounded-pill text-bg-info"
+                            >In Progress</span>
+                            <span
+                                t-elif="order.state == 'done'"
+                                class="badge rounded-pill text-bg-success"
+                            >Done</span>
+                            <span
+                                t-elif="order.state == 'cancel'"
+                                class="badge rounded-pill text-bg-danger"
+                            >Cancelled</span>
+                        </td>
+                    </tr>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- New order form -->
+    <template id="portal_stock_request_order_new" name="New Stock Request">
+        <t t-call="portal.portal_layout">
+            <div class="row">
+                <div class="col-12 col-lg-8">
+                    <h3 class="mb-4">New Stock Request</h3>
+
+                    <div t-if="error" class="alert alert-danger" role="alert">
+                        <t t-out="error" />
+                    </div>
+
+                    <form
+                        method="POST"
+                        action="/my/stock-request-orders/new"
+                        id="stock_request_order_form"
+                    >
+                        <input
+                            type="hidden"
+                            name="csrf_token"
+                            t-att-value="request.csrf_token()"
+                        />
+
+                        <div class="mb-3">
+                            <label class="form-label" for="expected_date">
+                                Expected Date
+                            </label>
+                            <input
+                                type="datetime-local"
+                                class="form-control"
+                                id="expected_date"
+                                name="expected_date"
+                                required="required"
+                                t-att-value="default_expected_date"
+                            />
+                        </div>
+
+                        <t t-if="not location">
+                            <div class="alert alert-warning" role="alert">
+                                Your contact has no stock request destination
+                                location configured yet. Please contact us
+                                before submitting a request.
+                            </div>
+                        </t>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="text-end">Quantity</th>
+                                        <th class="text-end">Available Stock</th>
+                                        <th />
+                                    </tr>
+                                </thead>
+                                <tbody id="stock_request_lines">
+                                    <tr class="o_sr_line">
+                                        <td>
+                                            <select
+                                                name="product_id"
+                                                class="form-select o_sr_product"
+                                                required="required"
+                                            >
+                                                <option value="">
+                                                    Select a product...
+                                                </option>
+                                                <option
+                                                    t-foreach="products"
+                                                    t-as="product"
+                                                    t-att-value="product.id"
+                                                >
+                                                    <t t-out="product.display_name" />
+                                                </option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="number"
+                                                name="product_uom_qty"
+                                                class="form-control o_sr_qty"
+                                                min="0.01"
+                                                step="any"
+                                                required="required"
+                                            />
+                                        </td>
+                                        <td class="text-end o_sr_free_qty text-muted">
+                                            —
+                                        </td>
+                                        <td class="text-end">
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-outline-danger o_sr_remove"
+                                                title="Remove line"
+                                            >
+                                                <i class="fa fa-trash-o" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mb-3">
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary"
+                                id="o_sr_add_line"
+                            >
+                                <i class="fa fa-plus" /> Add a line
+                            </button>
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                            t-att-disabled="not location and 'disabled'"
+                        >
+                            Submit Request
+                        </button>
+                    </form>
+                </div>
+                <div class="col-12 col-lg-4" t-if="location or warehouse">
+                    <h5 class="mb-1">Request details</h5>
+                    <hr class="mt-1 mb-2" />
+                    <table class="table table-sm table-borderless">
+                        <tbody>
+                            <tr t-if="location">
+                                <th class="ps-0">Destination Location:</th>
+                                <td><t t-out="location.display_name" /></td>
+                            </tr>
+                            <tr t-if="warehouse">
+                                <th class="ps-0">Source Warehouse:</th>
+                                <td><t t-out="warehouse.name" /></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-muted small">
+                        Your request will be reviewed by our team. Available
+                        stock is transferred directly and missing quantities
+                        are purchased from our suppliers.
+                    </p>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Order detail -->
+    <template id="portal_stock_request_order_page" name="Stock Request">
+        <t t-call="portal.portal_layout">
+            <div class="row">
+                <div class="col-12">
+                    <h3 class="mb-4">
+                        Stock Request <em t-out="order.name" />
+                    </h3>
+
+                    <div
+                        t-if="message == 'submitted'"
+                        class="alert alert-success"
+                        role="status"
+                    >
+                        Your request has been submitted and is pending review
+                        by our team.
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12 col-lg-6">
+                            <h5 class="mb-1">Information</h5>
+                            <hr class="mt-1 mb-2" />
+                            <table class="table table-sm table-borderless">
+                                <tbody>
+                                    <tr>
+                                        <th class="ps-0">Created on:</th>
+                                        <td>
+                                            <span
+                                                t-field="order.create_date"
+                                                t-options="{'widget': 'datetime'}"
+                                            />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="ps-0">Requested by:</th>
+                                        <td><t t-out="order.requested_by.name" /></td>
+                                    </tr>
+                                    <tr>
+                                        <th class="ps-0">Expected Date:</th>
+                                        <td>
+                                            <span
+                                                t-field="order.expected_date"
+                                                t-options="{'widget': 'datetime'}"
+                                            />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="ps-0">Destination Location:</th>
+                                        <td>
+                                            <t t-out="order.location_id.display_name" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="ps-0">Warehouse:</th>
+                                        <td><t t-out="order.warehouse_id.name" /></td>
+                                    </tr>
+                                    <tr>
+                                        <th class="ps-0">Status:</th>
+                                        <td>
+                                            <span
+                                                t-if="order.state == 'draft'"
+                                                class="badge rounded-pill text-bg-secondary"
+                                            >To Review</span>
+                                            <span
+                                                t-elif="order.state == 'open'"
+                                                class="badge rounded-pill text-bg-info"
+                                            >In Progress</span>
+                                            <span
+                                                t-elif="order.state == 'done'"
+                                                class="badge rounded-pill text-bg-success"
+                                            >Done</span>
+                                            <span
+                                                t-elif="order.state == 'cancel'"
+                                                class="badge rounded-pill text-bg-danger"
+                                            >Cancelled</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <h5 class="mb-1">Products</h5>
+                    <hr class="mt-1 mb-2" />
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th class="text-end">Requested Quantity</th>
+                                    <th class="text-end">Unit</th>
+                                    <th class="text-end">Available Stock</th>
+                                    <th class="text-end">From Stock</th>
+                                    <th class="text-end">To Purchase</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="order.stock_request_ids" t-as="line">
+                                    <tr>
+                                        <td>
+                                            <t t-out="line.product_id.display_name" />
+                                        </td>
+                                        <td class="text-end">
+                                            <t t-out="line.product_uom_qty" />
+                                        </td>
+                                        <td class="text-end">
+                                            <t t-out="line.product_uom_id.name" />
+                                        </td>
+                                        <td class="text-end">
+                                            <t t-out="line.free_qty" />
+                                            <t t-out="line.product_uom_id.name" />
+                                        </td>
+                                        <td class="text-end">
+                                            <t
+                                                t-if="order.state != 'draft'"
+                                                t-out="line.qty_from_stock"
+                                            />
+                                            <t t-else="">—</t>
+                                        </td>
+                                        <td class="text-end">
+                                            <t t-out="line.qty_to_purchase" />
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

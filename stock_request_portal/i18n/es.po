@@ -1,0 +1,277 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* stock_request_portal
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"Language-Team: \n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: stock_request_portal
+#: model:ir.model.fields,field_description:stock_request_portal.field_res_partner__stock_request_location_id
+msgid "Stock Request Destination Location"
+msgstr "Ubicación destino de solicitudes de stock"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid ""
+"Stock request order %(name)s was submitted from the portal by %(user)s and "
+"is pending review."
+msgstr ""
+"El pedido de abastecimiento %(name)s fue enviado desde el portal por "
+"%(user)s y está pendiente de revisión."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "New portal stock request %(name)s"
+msgstr "Nueva solicitud de abastecimiento del portal %(name)s"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid ""
+"Your contact has no stock request destination location configured yet. "
+"Please contact us."
+msgstr ""
+"Su contacto aún no tiene configurada una ubicación destino de solicitudes "
+"de stock. Contáctenos."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Invalid quantity %s."
+msgstr "Cantidad inválida %s."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Quantities must be greater than zero."
+msgstr "Las cantidades deben ser mayores que cero."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Invalid product selected."
+msgstr "Producto seleccionado inválido."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Add at least one product line to submit a request."
+msgstr "Agregue al menos una línea de producto para enviar una solicitud."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Expected date is required."
+msgstr "La fecha esperada es obligatoria."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Invalid expected date."
+msgstr "Fecha esperada inválida."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "No warehouse is configured for the current company."
+msgstr "No hay depósito configurado para la compañía actual."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Newest"
+msgstr "Más reciente"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Reference"
+msgstr "Referencia"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/controllers/portal.py:0
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Expected Date"
+msgstr "Fecha esperada"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Stock Requests"
+msgstr "Solicitudes de abastecimiento"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Create and follow your stock requests"
+msgstr "Cree y siga sus solicitudes de abastecimiento"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "There are currently no stock requests for your account."
+msgstr "Actualmente no hay solicitudes de abastecimiento para su cuenta."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Created on"
+msgstr "Creado el"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Lines"
+msgstr "Líneas"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Status"
+msgstr "Estado"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "To Review"
+msgstr "A revisar"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "In Progress"
+msgstr "En proceso"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Done"
+msgstr "Realizado"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Cancelled"
+msgstr "Cancelado"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "New Stock Request"
+msgstr "Nueva solicitud de abastecimiento"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Your contact has no stock request destination location configured yet. Please contact us before submitting a request."
+msgstr ""
+"Su contacto aún no tiene configurada una ubicación destino de solicitudes "
+"de stock. Contáctenos antes de enviar una solicitud."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Product"
+msgstr "Producto"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Quantity"
+msgstr "Cantidad"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Available Stock"
+msgstr "Stock disponible"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Select a product..."
+msgstr "Seleccione un producto..."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Remove line"
+msgstr "Eliminar línea"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Add a line"
+msgstr "Agregar una línea"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Submit Request"
+msgstr "Enviar solicitud"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Request details"
+msgstr "Detalles de la solicitud"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Destination Location:"
+msgstr "Ubicación destino:"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Source Warehouse:"
+msgstr "Depósito origen:"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid ""
+"Your request will be reviewed by our team. Available stock is transferred "
+"directly and missing quantities are purchased from our suppliers."
+msgstr ""
+"Su solicitud será revisada por nuestro equipo. El stock disponible se "
+"transfiere directamente y las cantidades faltantes se compran a nuestros "
+"proveedores."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Your request has been submitted and is pending review by our team."
+msgstr ""
+"Su solicitud fue enviada y está pendiente de revisión por nuestro equipo."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Information"
+msgstr "Información"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Created on:"
+msgstr "Creado el:"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Requested by:"
+msgstr "Solicitado por:"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Expected Date:"
+msgstr "Fecha esperada:"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Warehouse:"
+msgstr "Depósito:"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Status:"
+msgstr "Estado:"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Products"
+msgstr "Productos"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Requested Quantity"
+msgstr "Cantidad solicitada"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Unit"
+msgstr "Unidad"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "From Stock"
+msgstr "Desde stock"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "To Purchase"
+msgstr "A comprar"
