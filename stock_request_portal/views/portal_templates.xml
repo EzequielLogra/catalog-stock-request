@@ -45,6 +45,8 @@
         </xpath>
         <div id="portal_client_category" position="inside">
             <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/stock_request_portal/static/src/img/stock-request.svg'" />
+                <t t-set="config_card" t-value="True" />
                 <t t-set="title">Stock Requests</t>
                 <t t-set="url" t-value="'/my/stock-request-orders'" />
                 <t t-set="text">Create and follow your stock requests</t>
