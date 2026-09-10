@@ -20,7 +20,7 @@ class StockRequestOrder(models.Model):
         )
         managers = (
             self.env.ref("stock_request.group_stock_request_manager")
-            .users.filtered("active")
+            .user_ids.filtered("active")
         )
         partners = managers.mapped("partner_id")
         if partners:

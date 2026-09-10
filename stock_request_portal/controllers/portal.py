@@ -37,13 +37,19 @@ class CustomerPortal(CustomerPortal):
             .exists()
         )
         if not order:
-            raise MissingError
+            raise MissingError(
+                request.env._("This document does not exist.")
+            )
         user_partner = request.env.user.partner_id
         if (
             order.requested_by.partner_id.commercial_partner_id
             != user_partner.commercial_partner_id
         ):
-            raise AccessError
+            raise AccessError(
+                request.env._(
+                    "You are not allowed to access this document."
+                )
+            )
         return order
 
     def _get_stock_request_destination_location(self):
@@ -82,9 +88,17 @@ class CustomerPortal(CustomerPortal):
         ]
 
     def _get_stock_request_products(self):
-        return request.env["product.product"].sudo().search(
-            [("type", "in", ["product", "consu"])],
-            order="categ_id.complete_name asc, name asc",
+        products = request.env["product.product"].sudo().search(
+            [("type", "in", ["product", "consu"])]
+        )
+        # Dotted order terms like "categ_id.complete_name" are not
+        # supported by the ORM here, so sort in Python (small catalogs).
+        return sorted(
+            products,
+            key=lambda product: (
+                product.categ_id.complete_name or "",
+                product.name or "",
+            ),
         )
 
     def _prepare_stock_request_form_values(self, error=None):

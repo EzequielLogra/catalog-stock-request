@@ -6,6 +6,7 @@ from odoo.tests import HttpCase, tagged
 
 @tagged("post_install", "-at_install")
 class TestStockRequestPortal(HttpCase):
+    @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.company = cls.env.company
