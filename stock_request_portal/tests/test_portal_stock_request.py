@@ -84,6 +84,19 @@ class TestStockRequestPortal(HttpCase):
         self.assertIn("Product B", response.text)
         self.assertNotIn("Product A", response.text)
 
+    def test_portal_catalog_category_filter(self):
+        category = self.env["product.category"].create(
+            {"name": "Insumos Category"}
+        )
+        self.product_b.categ_id = category
+        self.authenticate("portal_client", "P0rtalClient1!")
+        response = self.url_open(
+            f"/my/stock-request-orders/new?category_id={category.id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Product B", response.text)
+        self.assertNotIn("Product A", response.text)
+
     def test_portal_user_can_create_order(self):
         self.authenticate("portal_client", "P0rtalClient1!")
         self._get_csrf_token("/my/stock-request-orders/new")

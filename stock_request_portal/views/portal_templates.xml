@@ -33,25 +33,27 @@
         </xpath>
     </template>
 
-    <!-- /my home card -->
+    <!-- /my home card: own row next to the client category -->
     <template
         id="portal_my_home_stock_request"
         name="Portal My Home: stock request orders"
         inherit_id="portal.portal_my_home"
         priority="40"
     >
-        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
-            <t t-set="portal_client_category_enable" t-value="True" />
-        </xpath>
-        <div id="portal_client_category" position="inside">
-            <t t-call="portal.portal_docs_entry">
-                <t t-set="icon" t-value="'/stock_request_portal/static/src/img/stock-request.svg'" />
-                <t t-set="config_card" t-value="True" />
-                <t t-set="title">Stock Requests</t>
-                <t t-set="url" t-value="'/my/stock-request-orders'" />
-                <t t-set="text">Create and follow your stock requests</t>
-                <t t-set="placeholder_count" t-value="'stock_request_order_count'" />
-            </t>
+        <div id="portal_client_category" position="after">
+            <div
+                class="o_portal_category row g-2 mt-3"
+                id="portal_stock_request_category"
+            >
+                <t t-call="portal.portal_docs_entry">
+                    <t t-set="icon" t-value="'/stock_request_portal/static/src/img/stock-request.svg'" />
+                    <t t-set="config_card" t-value="True" />
+                    <t t-set="title">Stock Requests</t>
+                    <t t-set="url" t-value="'/my/stock-request-orders'" />
+                    <t t-set="text">Create and follow your stock requests</t>
+                    <t t-set="placeholder_count" t-value="'stock_request_order_count'" />
+                </t>
+            </div>
         </div>
     </template>
 
@@ -75,16 +77,10 @@
 
             <div
                 t-if="not orders"
-                class="alert alert-warning d-flex align-items-center justify-content-between gap-2"
+                class="alert alert-warning"
                 role="alert"
             >
-                <span>There are currently no stock requests for your account.</span>
-                <a
-                    href="/my/stock-request-orders/new"
-                    class="btn btn-sm btn-primary"
-                >
-                    <i class="fa fa-plus" /> New Stock Request
-                </a>
+                There are currently no stock requests for your account.
             </div>
             <t t-if="orders" t-call="portal.portal_table">
                 <thead>
@@ -155,11 +151,34 @@
                         </div>
                     </t>
 
+                    <div
+                        class="mb-2 d-flex flex-wrap gap-1"
+                        id="o_sr_categories"
+                    >
+                        <a
+                            class="btn btn-sm"
+                            t-att-class="'btn-primary' if not category_id else 'btn-outline-primary'"
+                            t-attf-href="/my/stock-request-orders/new{{ '?search=' + search if search else '' }}"
+                        >
+                            All
+                        </a>
+                        <t t-foreach="categories" t-as="category">
+                            <a
+                                class="btn btn-sm"
+                                t-att-class="'btn-primary' if category_id == category.id else 'btn-outline-primary'"
+                                t-attf-href="/my/stock-request-orders/new?category_id={{ category.id }}{{ '&amp;search=' + search if search else '' }}"
+                            >
+                                <t t-out="category.display_name" />
+                            </a>
+                        </t>
+                    </div>
+
                     <form
                         method="get"
                         action="/my/stock-request-orders/new"
                         class="mb-3"
                     >
+                        <input type="hidden" name="category_id" t-att-value="category_id or ''" />
                         <div class="input-group">
                             <input
                                 type="text"
@@ -202,43 +221,20 @@
                             />
                         </div>
 
-                        <div class="row mb-2">
+                         <div class="row mb-2">
                             <t t-foreach="products" t-as="product">
                                 <div class="col-6 col-md-4 col-lg-3 mb-3">
                                     <div
                                         class="card h-100 o_sr_product_card"
                                         t-att-data-product-id="product.id"
                                         t-att-data-product-name="product.display_name"
-                                        t-att-data-free-qty="product_free_qty.get(product.id, 0.0)"
-                                        t-att-data-uom="product.uom_id.name or ''"
                                     >
-                                        <div class="text-center p-2 o_sr_product_image">
-                                            <t t-if="product.image_128">
-                                                <img
-                                                    class="img-fluid o_sr_product_img"
-                                                    t-att-src="image_data_uri(product.image_128)"
-                                                    t-att-alt="product.display_name"
-                                                />
-                                            </t>
-                                            <t t-else="">
-                                                <div class="o_sr_product_img text-muted d-flex align-items-center justify-content-center">
-                                                    <i class="fa fa-picture-o fa-2x" />
-                                                </div>
-                                            </t>
-                                        </div>
-                                        <div class="card-body pt-0">
+                                        <div class="card-body">
                                             <h6 class="card-title mb-1">
                                                 <t t-out="product.display_name" />
                                             </h6>
                                             <div t-if="product.default_code" class="small text-muted">
                                                 <t t-out="product.default_code" />
-                                            </div>
-                                            <div class="small">
-                                                <span class="text-muted">Stock:</span>
-                                                <span
-                                                    t-out="product_free_qty.get(product.id, 0.0)"
-                                                />
-                                                <t t-out="product.uom_id.name" />
                                             </div>
                                         </div>
                                         <div class="card-footer text-center bg-transparent border-0 pb-3">
@@ -268,13 +264,12 @@
                                     <tr>
                                         <th>Product</th>
                                         <th class="text-end">Quantity</th>
-                                        <th class="text-end">Available Stock</th>
                                         <th />
                                     </tr>
                                 </thead>
                                 <tbody id="stock_request_lines">
                                     <tr id="o_sr_no_lines" class="text-muted">
-                                        <td colspan="4">
+                                        <td colspan="3">
                                             Add products to your request from
                                             the catalog above.
                                         </td>
@@ -313,7 +308,6 @@
                                     required="required"
                                 />
                             </td>
-                            <td class="text-end o_sr_free_qty text-muted" />
                             <td class="text-end">
                                 <button
                                     type="button"
@@ -442,7 +436,6 @@
                                     <th>Product</th>
                                     <th class="text-end">Requested Quantity</th>
                                     <th class="text-end">Unit</th>
-                                    <th class="text-end">Available Stock</th>
                                     <th class="text-end">From Stock</th>
                                     <th class="text-end">To Purchase</th>
                                 </tr>
@@ -457,10 +450,6 @@
                                             <t t-out="line.product_uom_qty" />
                                         </td>
                                         <td class="text-end">
-                                            <t t-out="line.product_uom_id.name" />
-                                        </td>
-                                        <td class="text-end">
-                                            <t t-out="line.free_qty" />
                                             <t t-out="line.product_uom_id.name" />
                                         </td>
                                         <td class="text-end">

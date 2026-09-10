@@ -305,3 +305,8 @@ msgstr "Agregue productos a su solicitud desde el catálogo de arriba."
 #: code:addons/stock_request_portal/views/portal_templates.xml:0
 msgid "Order lines"
 msgstr "Líneas del pedido"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "All"
+msgstr "Todos"

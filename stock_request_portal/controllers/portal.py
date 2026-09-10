@@ -62,8 +62,16 @@ class CustomerPortal(CustomerPortal):
             .search([("company_id", "=", company.id)], limit=1)
         )
 
-    def _get_stock_request_catalog_domain(self, search=None):
+    def _get_stock_request_categories(self):
+        return request.env["product.category"].sudo().search(
+            [("product_ids.type", "in", ["product", "consu"])],
+            order="complete_name asc",
+        )
+
+    def _get_stock_request_catalog_domain(self, search=None, category=None):
         domain = [("type", "in", ["product", "consu"])]
+        if category:
+            domain.append(("categ_id", "child_of", category.id))
         if search:
             domain += [
                 "|",
@@ -75,13 +83,28 @@ class CustomerPortal(CustomerPortal):
         return domain
 
     def _prepare_stock_request_form_values(
-        self, error=None, search=None, page=1
+        self, error=None, search=None, category_id=None, page=1
     ):
         values = self._prepare_portal_layout_values()
         warehouse = self._get_stock_request_warehouse()
         Product = request.env["product.product"].sudo()
-        domain = self._get_stock_request_catalog_domain(search)
-        url_args = {"search": search} if search else {}
+        category = request.env["product.category"]
+        if category_id:
+            try:
+                category = (
+                    request.env["product.category"]
+                    .sudo()
+                    .browse(int(category_id))
+                    .exists()
+                )
+            except (TypeError, ValueError):
+                category = request.env["product.category"]
+        domain = self._get_stock_request_catalog_domain(search, category)
+        url_args = {}
+        if search:
+            url_args["search"] = search
+        if category:
+            url_args["category_id"] = category.id
         pager_values = portal_pager(
             url="/my/stock-request-orders/new",
             total=Product.search_count(domain),
@@ -95,19 +118,14 @@ class CustomerPortal(CustomerPortal):
             limit=self._stock_request_catalog_page_size,
             offset=pager_values["offset"],
         )
-        product_free_qty = {}
-        if warehouse and products:
-            stocked_products = products.with_context(
-                location=warehouse.lot_stock_id.id
-            )
-            for product in stocked_products:
-                product_free_qty[product.id] = product.free_qty
         values.update(
             {
                 "page_name": "stock_request_order_new",
                 "error": error,
                 "products": products,
-                "product_free_qty": product_free_qty,
+                "categories": self._get_stock_request_categories(),
+                "category": category,
+                "category_id": category.id or None,
                 "search": search,
                 "pager": pager_values,
                 "default_url": "/my/stock-request-orders/new",
@@ -238,10 +256,10 @@ class CustomerPortal(CustomerPortal):
         sitemap=False,
     )
     def portal_stock_request_order_new(
-        self, error=None, search=None, page=1, **kwargs
+        self, error=None, search=None, category_id=None, page=1, **kwargs
     ):
         values = self._prepare_stock_request_form_values(
-            error=error, search=search, page=page
+            error=error, search=search, category_id=category_id, page=page
         )
         return request.render(
             "stock_request_portal.portal_stock_request_order_new", values

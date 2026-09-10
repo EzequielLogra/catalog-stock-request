@@ -5,11 +5,6 @@ const lineTemplate = document.querySelector("#o_sr_line_template");
 const noLinesRow = document.querySelector("#o_sr_no_lines");
 
 if (linesContainer && lineTemplate) {
-    const formatFreeQty = (qty, uom) => {
-        const parsed = parseFloat(Number(qty).toFixed(2));
-        return uom ? `${parsed} ${uom}` : `${parsed}`;
-    };
-
     const findRow = (productId) => {
         return linesContainer
             .querySelector(`.o_sr_product[value="${productId}"]`)
@@ -40,10 +35,6 @@ if (linesContainer && lineTemplate) {
         row.querySelector(".o_sr_line_name").textContent =
             card.dataset.productName || "";
         row.querySelector(".o_sr_product").value = productId;
-        row.querySelector(".o_sr_free_qty").textContent = formatFreeQty(
-            card.dataset.freeQty,
-            card.dataset.uom
-        );
         linesContainer.appendChild(row);
     };
 
@@ -69,7 +60,7 @@ if (linesContainer && lineTemplate) {
                 removeNoLinesHint();
                 linesContainer.insertAdjacentHTML(
                     "beforeend",
-                    '<tr class="table-danger"><td colspan="4">Add at least one product line to submit a request.</td></tr>'
+                    '<tr class="table-danger"><td colspan="3">Add at least one product line to submit a request.</td></tr>'
                 );
             }
         });
