@@ -275,3 +275,33 @@ msgstr "Desde stock"
 #: code:addons/stock_request_portal/views/portal_templates.xml:0
 msgid "To Purchase"
 msgstr "A comprar"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Search product..."
+msgstr "Buscar producto..."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Search"
+msgstr "Buscar"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Add"
+msgstr "Agregar"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "No products found matching your search."
+msgstr "No se encontraron productos que coincidan con la búsqueda."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Add products to your request from the catalog above."
+msgstr "Agregue productos a su solicitud desde el catálogo de arriba."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Order lines"
+msgstr "Líneas del pedido"

@@ -14,6 +14,7 @@
     "assets": {
         "web.assets_frontend": [
             "stock_request_portal/static/src/js/stock_request_form.js",
+            "stock_request_portal/static/src/css/stock_request_form.css",
         ],
     },
     "installable": True,

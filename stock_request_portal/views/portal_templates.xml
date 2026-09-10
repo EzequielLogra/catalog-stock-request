@@ -62,8 +62,27 @@
                 <t t-set="title">Stock Requests</t>
             </t>
 
-            <div t-if="not orders" class="alert alert-warning" role="alert">
-                There are currently no stock requests for your account.
+            <div class="d-flex justify-content-end mb-3">
+                <a
+                    href="/my/stock-request-orders/new"
+                    class="btn btn-primary"
+                >
+                    <i class="fa fa-plus" /> New Stock Request
+                </a>
+            </div>
+
+            <div
+                t-if="not orders"
+                class="alert alert-warning d-flex align-items-center justify-content-between gap-2"
+                role="alert"
+            >
+                <span>There are currently no stock requests for your account.</span>
+                <a
+                    href="/my/stock-request-orders/new"
+                    class="btn btn-sm btn-primary"
+                >
+                    <i class="fa fa-plus" /> New Stock Request
+                </a>
             </div>
             <t t-if="orders" t-call="portal.portal_table">
                 <thead>
@@ -115,7 +134,7 @@
         </t>
     </template>
 
-    <!-- New order form -->
+    <!-- New order form with product catalog -->
     <template id="portal_stock_request_order_new" name="New Stock Request">
         <t t-call="portal.portal_layout">
             <div class="row">
@@ -125,6 +144,36 @@
                     <div t-if="error" class="alert alert-danger" role="alert">
                         <t t-out="error" />
                     </div>
+
+                    <t t-if="not location">
+                        <div class="alert alert-warning" role="alert">
+                            Your contact has no stock request destination
+                            location configured yet. Please contact us
+                            before submitting a request.
+                        </div>
+                    </t>
+
+                    <form
+                        method="get"
+                        action="/my/stock-request-orders/new"
+                        class="mb-3"
+                    >
+                        <div class="input-group">
+                            <input
+                                type="text"
+                                name="search"
+                                class="form-control"
+                                placeholder="Search product..."
+                                t-att-value="search or ''"
+                            />
+                            <button
+                                type="submit"
+                                class="btn btn-outline-primary"
+                            >
+                                <i class="fa fa-search" /> Search
+                            </button>
+                        </div>
+                    </form>
 
                     <form
                         method="POST"
@@ -151,14 +200,66 @@
                             />
                         </div>
 
-                        <t t-if="not location">
-                            <div class="alert alert-warning" role="alert">
-                                Your contact has no stock request destination
-                                location configured yet. Please contact us
-                                before submitting a request.
+                        <div class="row mb-2">
+                            <t t-foreach="products" t-as="product">
+                                <div class="col-6 col-md-4 col-lg-3 mb-3">
+                                    <div
+                                        class="card h-100 o_sr_product_card"
+                                        t-att-data-product-id="product.id"
+                                        t-att-data-product-name="product.display_name"
+                                        t-att-data-free-qty="product_free_qty.get(product.id, 0.0)"
+                                        t-att-data-uom="product.uom_id.name or ''"
+                                    >
+                                        <div class="text-center p-2 o_sr_product_image">
+                                            <t t-if="product.image_128">
+                                                <img
+                                                    class="img-fluid o_sr_product_img"
+                                                    t-att-src="image_data_uri(product.image_128)"
+                                                    t-att-alt="product.display_name"
+                                                />
+                                            </t>
+                                            <t t-else="">
+                                                <div class="o_sr_product_img text-muted d-flex align-items-center justify-content-center">
+                                                    <i class="fa fa-picture-o fa-2x" />
+                                                </div>
+                                            </t>
+                                        </div>
+                                        <div class="card-body pt-0">
+                                            <h6 class="card-title mb-1">
+                                                <t t-out="product.display_name" />
+                                            </h6>
+                                            <div t-if="product.default_code" class="small text-muted">
+                                                <t t-out="product.default_code" />
+                                            </div>
+                                            <div class="small">
+                                                <span class="text-muted">Stock:</span>
+                                                <span
+                                                    t-out="product_free_qty.get(product.id, 0.0)"
+                                                />
+                                                <t t-out="product.uom_id.name" />
+                                            </div>
+                                        </div>
+                                        <div class="card-footer text-center bg-transparent border-0 pb-3">
+                                            <button
+                                                type="button"
+                                                class="btn btn-primary btn-sm o_sr_add_product"
+                                            >
+                                                <i class="fa fa-plus" /> Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+                            <div t-if="not products" class="col-12">
+                                <div class="alert alert-info" role="alert">
+                                    No products found matching your search.
+                                </div>
                             </div>
-                        </t>
+                        </div>
 
+                        <t t-if="pager" t-call="website.pager" />
+
+                        <h5 class="mt-4">Order lines</h5>
                         <div class="table-responsive">
                             <table class="table table-sm align-middle">
                                 <thead>
@@ -170,60 +271,14 @@
                                     </tr>
                                 </thead>
                                 <tbody id="stock_request_lines">
-                                    <tr class="o_sr_line">
-                                        <td>
-                                            <select
-                                                name="product_id"
-                                                class="form-select o_sr_product"
-                                                required="required"
-                                            >
-                                                <option value="">
-                                                    Select a product...
-                                                </option>
-                                                <option
-                                                    t-foreach="products"
-                                                    t-as="product"
-                                                    t-att-value="product.id"
-                                                >
-                                                    <t t-out="product.display_name" />
-                                                </option>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="number"
-                                                name="product_uom_qty"
-                                                class="form-control o_sr_qty"
-                                                min="0.01"
-                                                step="any"
-                                                required="required"
-                                            />
-                                        </td>
-                                        <td class="text-end o_sr_free_qty text-muted">
-                                            —
-                                        </td>
-                                        <td class="text-end">
-                                            <button
-                                                type="button"
-                                                class="btn btn-sm btn-outline-danger o_sr_remove"
-                                                title="Remove line"
-                                            >
-                                                <i class="fa fa-trash-o" />
-                                            </button>
+                                    <tr id="o_sr_no_lines" class="text-muted">
+                                        <td colspan="4">
+                                            Add products to your request from
+                                            the catalog above.
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
-                        </div>
-
-                        <div class="mb-3">
-                            <button
-                                type="button"
-                                class="btn btn-outline-primary"
-                                id="o_sr_add_line"
-                            >
-                                <i class="fa fa-plus" /> Add a line
-                            </button>
                         </div>
 
                         <button
@@ -234,6 +289,40 @@
                             Submit Request
                         </button>
                     </form>
+
+                    <template id="o_sr_line_template">
+                        <tr class="o_sr_line">
+                            <td>
+                                <span class="o_sr_line_name" />
+                                <input
+                                    type="hidden"
+                                    name="product_id"
+                                    class="o_sr_product"
+                                />
+                            </td>
+                            <td>
+                                <input
+                                    type="number"
+                                    name="product_uom_qty"
+                                    class="form-control o_sr_qty"
+                                    min="0.01"
+                                    step="any"
+                                    value="1"
+                                    required="required"
+                                />
+                            </td>
+                            <td class="text-end o_sr_free_qty text-muted" />
+                            <td class="text-end">
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger o_sr_remove"
+                                    title="Remove line"
+                                >
+                                    <i class="fa fa-trash-o" />
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
                 </div>
                 <div class="col-12 col-lg-4" t-if="location or warehouse">
                     <h5 class="mb-1">Request details</h5>

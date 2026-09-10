@@ -1,0 +1,17 @@
+.o_sr_product_card {
+    max-width: 16rem;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.o_sr_product_image {
+    height: 6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.o_sr_product_img {
+    max-height: 5.5rem;
+    width: auto;
+}

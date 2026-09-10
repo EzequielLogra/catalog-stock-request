@@ -67,6 +67,23 @@ class TestStockRequestPortal(HttpCase):
             "/my/stock-request-orders/new", data=data, timeout=60
         )
 
+    def test_portal_list_page_shows_new_button_and_catalog(self):
+        self.authenticate("portal_client", "P0rtalClient1!")
+        response = self.url_open("/my/stock-request-orders")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("New Stock Request", response.text)
+        response = self.url_open("/my/stock-request-orders/new")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("o_sr_product_card", response.text)
+        self.assertIn("Product A", response.text)
+        # search narrows the catalog
+        response = self.url_open(
+            "/my/stock-request-orders/new?search=Product+B"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Product B", response.text)
+        self.assertNotIn("Product A", response.text)
+
     def test_portal_user_can_create_order(self):
         self.authenticate("portal_client", "P0rtalClient1!")
         self._get_csrf_token("/my/stock-request-orders/new")

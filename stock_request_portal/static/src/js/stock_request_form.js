@@ -1,71 +1,77 @@
 /** @odoo-module */
 
-import { rpc } from "@web/core/network/rpc";
-
 const linesContainer = document.querySelector("#stock_request_lines");
-const addLineButton = document.querySelector("#o_sr_add_line");
+const lineTemplate = document.querySelector("#o_sr_line_template");
+const noLinesRow = document.querySelector("#o_sr_no_lines");
 
-if (linesContainer) {
-    const setFreeQty = (row, product) => {
-        const cell = row.querySelector(".o_sr_free_qty");
-        if (!cell) {
+if (linesContainer && lineTemplate) {
+    const formatFreeQty = (qty, uom) => {
+        const parsed = parseFloat(Number(qty).toFixed(2));
+        return uom ? `${parsed} ${uom}` : `${parsed}`;
+    };
+
+    const findRow = (productId) => {
+        return linesContainer
+            .querySelector(`.o_sr_product[value="${productId}"]`)
+            ?.closest("tr");
+    };
+
+    const removeNoLinesHint = () => {
+        if (noLinesRow && noLinesRow.isConnected) {
+            noLinesRow.remove();
+        }
+    };
+
+    const addProduct = (card) => {
+        const productId = card.dataset.productId;
+        if (!productId) {
             return;
         }
-        if (!product) {
-            cell.textContent = "—";
+        const existingRow = findRow(productId);
+        if (existingRow) {
+            const qtyInput = existingRow.querySelector(".o_sr_qty");
+            const current = parseFloat(qtyInput.value || "0") || 0;
+            qtyInput.value = (current + 1).toFixed(2);
+            qtyInput.focus();
             return;
         }
-        rpc("/my/stock-request-orders/free_qty", { product_ids: [product] }).then(
-            (result) => {
-                const data = result[product];
-                if (!data) {
-                    cell.textContent = "—";
-                    return;
-                }
-                const qty = parseFloat(data.free_qty.toFixed(2));
-                cell.textContent = `${qty} ${data.uom}`;
-            }
+        removeNoLinesHint();
+        const row = lineTemplate.content.firstElementChild.cloneNode(true);
+        row.querySelector(".o_sr_line_name").textContent =
+            card.dataset.productName || "";
+        row.querySelector(".o_sr_product").value = productId;
+        row.querySelector(".o_sr_free_qty").textContent = formatFreeQty(
+            card.dataset.freeQty,
+            card.dataset.uom
         );
+        linesContainer.appendChild(row);
     };
 
-    const resetRow = (row) => {
-        const select = row.querySelector(".o_sr_product");
-        if (select) {
-            select.selectedIndex = 0;
-        }
-        const qty = row.querySelector(".o_sr_qty");
-        if (qty) {
-            qty.value = "";
-        }
-        setFreeQty(row, null);
-    };
-
-    if (addLineButton) {
-        addLineButton.addEventListener("click", () => {
-            const firstRow = linesContainer.querySelector(".o_sr_line");
-            const newRow = firstRow.cloneNode(true);
-            resetRow(newRow);
-            firstRow.closest("tbody").appendChild(newRow);
-        });
-    }
-
-    linesContainer.addEventListener("change", (event) => {
-        if (event.target.classList.contains("o_sr_product")) {
-            setFreeQty(event.target.closest("tr"), event.target.value || null);
+    document.addEventListener("click", (event) => {
+        const button = event.target.closest(".o_sr_add_product");
+        if (button) {
+            addProduct(button.closest(".o_sr_product_card"));
         }
     });
 
     linesContainer.addEventListener("click", (event) => {
         const button = event.target.closest(".o_sr_remove");
-        if (!button) {
-            return;
-        }
-        const row = button.closest("tr");
-        const rows = linesContainer.querySelectorAll(".o_sr_line");
-        if (rows.length > 1) {
-            row.remove();
-        } else {
-            resetRow(row);
+        if (button) {
+            button.closest("tr").remove();
         }
     });
+
+    const form = document.querySelector("#stock_request_order_form");
+    if (form) {
+        form.addEventListener("submit", (event) => {
+            if (!linesContainer.querySelector(".o_sr_line")) {
+                event.preventDefault();
+                removeNoLinesHint();
+                linesContainer.insertAdjacentHTML(
+                    "beforeend",
+                    '<tr class="table-danger"><td colspan="4">Add at least one product line to submit a request.</td></tr>'
+                );
+            }
+        });
+    }
 }

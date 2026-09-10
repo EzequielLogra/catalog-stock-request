@@ -12,6 +12,7 @@ from odoo.addons.portal.controllers.portal import (
 class CustomerPortal(CustomerPortal):
 
     _stock_request_items_per_page = 20
+    _stock_request_catalog_page_size = 30
 
     # ------------------------------------------------------------------
     # Tools
@@ -61,21 +62,56 @@ class CustomerPortal(CustomerPortal):
             .search([("company_id", "=", company.id)], limit=1)
         )
 
-    def _get_stock_request_products(self):
-        return (
-            request.env["product.product"]
-            .sudo()
-            .search([("type", "in", ["product", "consu"])], order="name asc")
-        )
+    def _get_stock_request_catalog_domain(self, search=None):
+        domain = [("type", "in", ["product", "consu"])]
+        if search:
+            domain += [
+                "|",
+                "|",
+                ("name", "ilike", search),
+                ("default_code", "ilike", search),
+                ("barcode", "ilike", search),
+            ]
+        return domain
 
-    def _prepare_stock_request_form_values(self, error=None):
+    def _prepare_stock_request_form_values(
+        self, error=None, search=None, page=1
+    ):
         values = self._prepare_portal_layout_values()
+        warehouse = self._get_stock_request_warehouse()
+        Product = request.env["product.product"].sudo()
+        domain = self._get_stock_request_catalog_domain(search)
+        url_args = {"search": search} if search else {}
+        pager_values = portal_pager(
+            url="/my/stock-request-orders/new",
+            total=Product.search_count(domain),
+            page=page,
+            step=self._stock_request_catalog_page_size,
+            url_args=url_args,
+        )
+        products = Product.search(
+            domain,
+            order="name asc",
+            limit=self._stock_request_catalog_page_size,
+            offset=pager_values["offset"],
+        )
+        product_free_qty = {}
+        if warehouse and products:
+            stocked_products = products.with_context(
+                location=warehouse.lot_stock_id.id
+            )
+            for product in stocked_products:
+                product_free_qty[product.id] = product.free_qty
         values.update(
             {
                 "page_name": "stock_request_order_new",
                 "error": error,
-                "products": self._get_stock_request_products(),
-                "warehouse": self._get_stock_request_warehouse(),
+                "products": products,
+                "product_free_qty": product_free_qty,
+                "search": search,
+                "pager": pager_values,
+                "default_url": "/my/stock-request-orders/new",
+                "warehouse": warehouse,
                 "location": self._get_stock_request_destination_location(),
                 "default_expected_date": fields.Datetime.now()
                 .replace(microsecond=0)
@@ -201,8 +237,12 @@ class CustomerPortal(CustomerPortal):
         methods=["GET"],
         sitemap=False,
     )
-    def portal_stock_request_order_new(self, error=None, **kwargs):
-        values = self._prepare_stock_request_form_values(error=error)
+    def portal_stock_request_order_new(
+        self, error=None, search=None, page=1, **kwargs
+    ):
+        values = self._prepare_stock_request_form_values(
+            error=error, search=search, page=page
+        )
         return request.render(
             "stock_request_portal.portal_stock_request_order_new", values
         )
@@ -287,39 +327,6 @@ class CustomerPortal(CustomerPortal):
         return request.redirect(
             f"/my/stock-request-orders/{order.id}?message=submitted"
         )
-
-    # ------------------------------------------------------------------
-    # Free quantity endpoint
-    # ------------------------------------------------------------------
-
-    @http.route(
-        ["/my/stock-request-orders/free_qty"],
-        type="jsonrpc",
-        auth="user",
-        website=True,
-        readonly=True,
-    )
-    def portal_stock_request_free_qty(self, product_ids, **kw):
-        warehouse = self._get_stock_request_warehouse()
-        location_id = warehouse.lot_stock_id.id if warehouse else None
-        result = {}
-        products = (
-            request.env["product.product"]
-            .sudo()
-            .browse(product_ids)
-            .exists()
-        )
-        for product in products:
-            free_qty = (
-                product.with_context(location=location_id).free_qty
-                if location_id
-                else 0.0
-            )
-            result[product.id] = {
-                "free_qty": free_qty,
-                "uom": product.uom_id.name or "",
-            }
-        return result
 
     # ------------------------------------------------------------------
     # Detail
