@@ -68,7 +68,7 @@ class CustomerPortal(CustomerPortal):
             groupby=["categ_id"],
             aggregates=["__count"],
         )
-        categ_ids = [g["categ_id"].id for g in groups if g["categ_id"]]
+        categ_ids = [categ.id for categ, count in groups if categ]
         return request.env["product.category"].sudo().search(
             [("id", "in", categ_ids)],
             order="complete_name asc",
