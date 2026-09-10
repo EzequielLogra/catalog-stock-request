@@ -63,8 +63,14 @@ class CustomerPortal(CustomerPortal):
         )
 
     def _get_stock_request_categories(self):
+        groups = request.env["product.product"].sudo()._read_group(
+            [("type", "in", ["product", "consu"])],
+            groupby=["categ_id"],
+            aggregates=["__count"],
+        )
+        categ_ids = [g["categ_id"].id for g in groups if g["categ_id"]]
         return request.env["product.category"].sudo().search(
-            [("product_ids.type", "in", ["product", "consu"])],
+            [("id", "in", categ_ids)],
             order="complete_name asc",
         )
 
