@@ -79,6 +79,15 @@ class TestStockRequestPortal(HttpCase):
         self.assertIn("Product A", response.text)
         self.assertIn("o_sr_categories", response.text)
         self.assertIn("data-category-id", response.text)
+        # product columns carry the class used by the client-side filter
+        self.assertIn("o_sr_product_col", response.text)
+        # each card has an integer quantity stepper
+        self.assertIn("o_sr_qty_stepper", response.text)
+        self.assertIn("o_sr_card_qty", response.text)
+        self.assertIn("o_sr_qty_plus", response.text)
+        self.assertIn("o_sr_qty_minus", response.text)
+        self.assertIn('min="1"', response.text)
+        self.assertIn('step="1"', response.text)
 
     def test_portal_catalog_renders_all_products_and_category_chips(self):
         category = self.env["product.category"].create(

@@ -58,6 +58,24 @@
     color: #fff;
 }
 
+/* Card quantity stepper */
+.o_sr_qty_stepper {
+    width: auto;
+}
+
+.o_sr_qty_stepper .o_sr_card_qty {
+    max-width: 3.25rem;
+    text-align: center;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.o_sr_qty_stepper .o_sr_card_qty::-webkit-outer-spin-button,
+.o_sr_qty_stepper .o_sr_card_qty::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 /* Order lines card */
 .o_sr_lines_card .card-header {
     border-bottom: 1px solid rgba(var(--bs-body-color-rgb), 0.125);

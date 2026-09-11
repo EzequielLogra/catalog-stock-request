@@ -211,7 +211,7 @@
 
                         <div class="row mb-2">
                             <t t-foreach="products" t-as="product">
-                                <div class="col-6 col-md-4 col-lg-3 mb-3">
+                                <div class="col-6 col-md-4 col-lg-3 mb-3 o_sr_product_col">
                                     <div
                                         class="card h-100 o_sr_product_card"
                                         t-att-data-category-id="product.categ_id.id"
@@ -225,10 +225,36 @@
                                             <div t-if="product.default_code" class="small text-muted mb-2">
                                                 <t t-out="product.default_code" />
                                             </div>
-                                            <div class="mt-auto pt-2">
+                                            <div class="mt-auto pt-2 d-flex gap-2">
+                                                <div
+                                                    class="input-group input-group-sm o_sr_qty_stepper"
+                                                >
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-outline-secondary o_sr_qty_minus"
+                                                        aria-label="Decrease quantity"
+                                                    >
+                                                        <i class="fa fa-minus" />
+                                                    </button>
+                                                    <input
+                                                        type="number"
+                                                        class="form-control text-center o_sr_card_qty"
+                                                        min="1"
+                                                        step="1"
+                                                        value="1"
+                                                        aria-label="Quantity"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-outline-secondary o_sr_qty_plus"
+                                                        aria-label="Increase quantity"
+                                                    >
+                                                        <i class="fa fa-plus" />
+                                                    </button>
+                                                </div>
                                                 <button
                                                     type="button"
-                                                    class="btn btn-sm btn-outline-primary w-100 o_sr_add_product"
+                                                    class="btn btn-sm btn-outline-primary flex-grow-1 o_sr_add_product"
                                                 >
                                                     <i class="fa fa-plus me-1" /> Add
                                                 </button>
@@ -302,8 +328,8 @@
                                     type="number"
                                     name="product_uom_qty"
                                     class="form-control o_sr_qty"
-                                    min="0.01"
-                                    step="any"
+                                    min="1"
+                                    step="1"
                                     value="1"
                                     required="required"
                                 />
