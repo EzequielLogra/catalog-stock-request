@@ -417,6 +417,7 @@ class CustomerPortal(CustomerPortal):
                 "page_name": "stock_request_order",
                 "order": order_sudo,
                 "message": message,
+                "show_supply_split": request.env.user._is_internal(),
             }
         )
         return request.render(

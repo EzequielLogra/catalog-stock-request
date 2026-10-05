@@ -531,8 +531,11 @@
                                     <th>Product</th>
                                     <th class="text-end">Requested Quantity</th>
                                     <th class="text-end">Unit</th>
-                                    <th class="text-end">From Stock</th>
-                                    <th class="text-end">To Purchase</th>
+                                    <!-- Supply split is internal information -->
+                                    <t t-if="show_supply_split">
+                                        <th class="text-end">From Stock</th>
+                                        <th class="text-end">To Purchase</th>
+                                    </t>
                                 </tr>
                             </thead>
                             <tbody>
@@ -547,16 +550,18 @@
                                         <td class="text-end">
                                             <t t-out="line.product_uom_id.name" />
                                         </td>
-                                        <td class="text-end">
-                                            <t
-                                                t-if="order.state != 'draft'"
-                                                t-out="line.qty_from_stock"
-                                            />
-                                            <t t-else="">—</t>
-                                        </td>
-                                        <td class="text-end">
-                                            <t t-out="line.qty_to_purchase" />
-                                        </td>
+                                        <t t-if="show_supply_split">
+                                            <td class="text-end">
+                                                <t
+                                                    t-if="order.state != 'draft'"
+                                                    t-out="line.qty_from_stock"
+                                                />
+                                                <t t-else="">—</t>
+                                            </td>
+                                            <td class="text-end">
+                                                <t t-out="line.qty_to_purchase" />
+                                            </td>
+                                        </t>
                                     </tr>
                                 </t>
                             </tbody>
