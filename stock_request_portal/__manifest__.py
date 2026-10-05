@@ -1,7 +1,7 @@
 {
     "name": "Stock Request Portal",
     "summary": "Allow portal users (clients) to create stock request orders from /my",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "license": "LGPL-3",
     "author": "Logra",
     "category": "Warehouse Management",

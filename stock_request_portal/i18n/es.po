@@ -35,10 +35,10 @@ msgstr "Nueva solicitud de abastecimiento del portal %(name)s"
 #. module: stock_request_portal
 #: code:addons/stock_request_portal/controllers/portal.py:0
 msgid ""
-"Your contact has no stock request destination location configured yet. "
+"Your contact has no stock request destination locations configured yet. "
 "Please contact us."
 msgstr ""
-"Su contacto aún no tiene configurada una ubicación destino de solicitudes "
+"Su contacto aún no tiene configuradas ubicaciones destino de solicitudes "
 "de stock. Contáctenos."
 
 #. module: stock_request_portal
@@ -150,10 +150,17 @@ msgstr "Nueva solicitud de abastecimiento"
 
 #. module: stock_request_portal
 #: code:addons/stock_request_portal/views/portal_templates.xml:0
-msgid "Your contact has no stock request destination location configured yet. Please contact us before submitting a request."
+msgid ""
+"Your contact has no stock request destination locations configured yet. "
+"Please contact us before submitting a request."
 msgstr ""
-"Su contacto aún no tiene configurada una ubicación destino de solicitudes "
+"Su contacto aún no tiene configuradas ubicaciones destino de solicitudes "
 "de stock. Contáctenos antes de enviar una solicitud."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Destination Location"
+msgstr "Ubicación destino"
 
 #. module: stock_request_portal
 #: code:addons/stock_request_portal/views/portal_templates.xml:0
@@ -288,11 +295,6 @@ msgstr "No se encontraron productos."
 
 #. module: stock_request_portal
 #: code:addons/stock_request_portal/views/portal_templates.xml:0
-msgid "Add products to your request from the catalog above."
-msgstr "Agregue productos a su solicitud desde el catálogo de arriba."
-
-#. module: stock_request_portal
-#: code:addons/stock_request_portal/views/portal_templates.xml:0
 msgid "Order lines"
 msgstr "Líneas del pedido"
 
@@ -300,3 +302,48 @@ msgstr "Líneas del pedido"
 #: code:addons/stock_request_portal/views/portal_templates.xml:0
 msgid "All"
 msgstr "Todos"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Ref:"
+msgstr "Ref:"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Total units:"
+msgstr "Total de unidades:"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Previous page"
+msgstr "Página anterior"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Next page"
+msgstr "Página siguiente"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Catalog pages"
+msgstr "Páginas del catálogo"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Add products to your request from the catalog."
+msgstr "Agregá productos a tu solicitud desde el catálogo."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Search by reference or name..."
+msgstr "Buscar por código o descripción..."
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "Search products"
+msgstr "Buscar productos"
+
+#. module: stock_request_portal
+#: code:addons/stock_request_portal/views/portal_templates.xml:0
+msgid "No products match your search."
+msgstr "Ningún producto coincide con la búsqueda."

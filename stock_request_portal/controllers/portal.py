@@ -1,3 +1,7 @@
+import re
+
+import pytz
+
 from odoo import fields, http
 from odoo.exceptions import AccessError, MissingError
 from odoo.fields import Command
@@ -12,6 +16,13 @@ from odoo.addons.portal.controllers.portal import (
 class CustomerPortal(CustomerPortal):
 
     _stock_request_items_per_page = 20
+    _stock_request_products_per_page = 20
+    # CSS variable -> system parameter holding its color
+    _stock_request_color_params = {
+        "--o-sr-primary": "stock_request_portal.color_primary",
+        "--o-sr-accent": "stock_request_portal.color_accent",
+    }
+    _stock_request_color_re = re.compile(r"#(?:[0-9a-fA-F]{3}){1,2}")
 
     # ------------------------------------------------------------------
     # Tools
@@ -52,11 +63,25 @@ class CustomerPortal(CustomerPortal):
             )
         return order
 
-    def _get_stock_request_destination_location(self):
+    def _get_stock_request_destination_locations(self):
+        """Return the destination locations the portal user may select:
+        those configured on the commercial partner or on any of its
+        active child contacts (one child contact per delivery point)."""
         partner = request.env.user.partner_id
         return (
-            partner.commercial_partner_id.stock_request_location_id
-            or partner.stock_request_location_id
+            request.env["res.partner"]
+            .sudo()
+            .search(
+                [
+                    (
+                        "commercial_partner_id",
+                        "=",
+                        partner.commercial_partner_id.id,
+                    ),
+                    ("active", "=", True),
+                ]
+            )
+            .mapped("stock_request_location_id")
         )
 
     def _get_stock_request_warehouse(self):
@@ -101,6 +126,24 @@ class CustomerPortal(CustomerPortal):
             ),
         )
 
+    def _get_stock_request_tz(self):
+        """Timezone in which the portal user reads and types dates."""
+        return pytz.timezone(
+            request.env.user.tz or request.env.context.get("tz") or "UTC"
+        )
+
+    def _get_stock_request_portal_style(self):
+        """Return the inline CSS variables that theme the catalog, read
+        from the system parameters. Missing or invalid colors are skipped
+        so the stylesheet falls back to the website theme."""
+        get_param = request.env["ir.config_parameter"].sudo().get_param
+        declarations = []
+        for variable, key in self._stock_request_color_params.items():
+            color = (get_param(key) or "").strip()
+            if self._stock_request_color_re.fullmatch(color):
+                declarations.append(f"{variable}: {color}")
+        return "; ".join(declarations) or None
+
     def _prepare_stock_request_form_values(self, error=None):
         values = self._prepare_portal_layout_values()
         values.update(
@@ -109,10 +152,14 @@ class CustomerPortal(CustomerPortal):
                 "error": error,
                 "products": self._get_stock_request_products(),
                 "categories": self._get_stock_request_categories(),
+                "products_per_page": self._stock_request_products_per_page,
+                "sr_style": self._get_stock_request_portal_style(),
                 "warehouse": self._get_stock_request_warehouse(),
-                "location": self._get_stock_request_destination_location(),
-                "default_expected_date": fields.Datetime.now()
-                .replace(microsecond=0)
+                "locations": self._get_stock_request_destination_locations(),
+                "default_expected_date": pytz.utc.localize(
+                    fields.Datetime.now()
+                )
+                .astimezone(self._get_stock_request_tz())
                 .strftime("%Y-%m-%dT%H:%M"),
             }
         )
@@ -253,12 +300,29 @@ class CustomerPortal(CustomerPortal):
         form = request.httprequest.form
         error = None
 
-        location = self._get_stock_request_destination_location()
-        if not location:
+        locations = self._get_stock_request_destination_locations()
+        if not locations:
             error = request.env._(
-                "Your contact has no stock request destination location "
-                "configured yet. Please contact us."
+                "Your contact has no stock request destination "
+                "locations configured yet. Please contact us."
             )
+
+        # Fall back to the first allowed location when the posted one is
+        # missing or does not belong to the contact.
+        location = locations[:1]
+        str_location_id = (form.get("location_id") or "").strip()
+        if str_location_id:
+            try:
+                chosen = (
+                    request.env["stock.location"]
+                    .sudo()
+                    .browse(int(str_location_id))
+                    .exists()
+                )
+            except ValueError:
+                chosen = request.env["stock.location"]
+            if chosen in locations:
+                location = chosen
 
         expected_date = None
         raw_expected_date = (form.get("expected_date") or "").strip()
@@ -274,6 +338,14 @@ class CustomerPortal(CustomerPortal):
                     expected_date = None
                 if not expected_date:
                     error = request.env._("Invalid expected date.")
+                else:
+                    # The form sends the user's local time; store UTC.
+                    expected_date = (
+                        self._get_stock_request_tz()
+                        .localize(expected_date)
+                        .astimezone(pytz.utc)
+                        .replace(tzinfo=None)
+                    )
 
         lines = []
         if not error:

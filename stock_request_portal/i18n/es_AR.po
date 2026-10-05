@@ -1,0 +1,458 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* stock_request_portal
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0-20260723\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-05 17:39+0000\n"
+"PO-Revision-Date: 2026-10-05 17:39+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: es_AR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "<i class=\"fa fa-paper-plane me-2\"/>Submit Request"
+msgstr "<i class=\"fa fa-paper-plane me-2\"/>Enviar solicitud"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "<i class=\"fa fa-plus me-1\"/> Add"
+msgstr "<i class=\"fa fa-plus me-1\"/> Agregar"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_stock_request_orders
+msgid "<i class=\"fa fa-plus\"/> New Stock Request"
+msgstr "<i class=\"fa fa-plus\"/> Nueva solicitud de abastecimiento"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "<span class=\"o_sr_line_count\" id=\"o_sr_line_count\">0</span>"
+msgstr ""
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid ""
+"<span class=\"o_sr_page_status\">\n"
+"                                    <span id=\"o_sr_page_current\">1</span>\n"
+"                                    /\n"
+"                                    <span id=\"o_sr_page_total\">1</span>\n"
+"                                </span>"
+msgstr ""
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "<span>All</span>"
+msgstr "<span>Todos</span>"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid ""
+"<span>Total units:</span>\n"
+"                                        <span class=\"o_sr_total_qty\" id=\"o_sr_total_qty\">0</span>"
+msgstr ""
+"<span>Total de unidades:</span>\n"
+"                                        <span class=\"o_sr_total_qty\" id=\"o_sr_total_qty\">0</span>"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid ""
+"Add at least one product line to\n"
+"                                        submit a request."
+msgstr "Agregue al menos una línea de producto para enviar una solicitud."
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Add at least one product line to submit a request."
+msgstr "Agregue al menos una línea de producto para enviar una solicitud."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid ""
+"Add products to your request from\n"
+"                                            the catalog."
+msgstr "Agregue productos a su solicitud desde el catálogo."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_stock_request_orders
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Cancelled"
+msgstr "Cancelado"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Catalog pages"
+msgstr "Páginas del catálogo"
+
+#. module: stock_request_portal
+#: model:ir.model,name:stock_request_portal.model_res_partner
+msgid "Contact"
+msgstr "Contacto"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_home_stock_request
+msgid "Create and follow your stock requests"
+msgstr "Cree y siga sus solicitudes de abastecimiento"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_stock_request_orders
+msgid "Created on"
+msgstr "Creado el"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Created on:"
+msgstr "Creado el:"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Decrease quantity"
+msgstr "Disminuir cantidad"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Destination Location"
+msgstr "Ubicación destino"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Destination Location:"
+msgstr "Ubicación destino:"
+
+#. module: stock_request_portal
+#: model:ir.model.fields,help:stock_request_portal.field_res_partner__stock_request_location_id
+#: model:ir.model.fields,help:stock_request_portal.field_res_users__stock_request_location_id
+msgid ""
+"Destination location for the stock request orders this client creates from "
+"the portal. Configure it once per client contact."
+msgstr ""
+"Ubicación destino de los pedidos de abastecimiento que este cliente crea "
+"desde el portal. Se configura una vez por contacto del cliente."
+
+#. module: stock_request_portal
+#: model:ir.model.fields,field_description:stock_request_portal.field_res_partner__display_name
+#: model:ir.model.fields,field_description:stock_request_portal.field_stock_request_order__display_name
+msgid "Display Name"
+msgstr "Nombre en pantalla"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_stock_request_orders
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Done"
+msgstr "Realizado"
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_stock_request_orders
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Expected Date"
+msgstr "Fecha esperada"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Expected Date:"
+msgstr "Fecha esperada:"
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Expected date is required."
+msgstr "La fecha esperada es obligatoria."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "From Stock"
+msgstr "Desde stock"
+
+#. module: stock_request_portal
+#: model:ir.model.fields,field_description:stock_request_portal.field_res_partner__id
+#: model:ir.model.fields,field_description:stock_request_portal.field_stock_request_order__id
+msgid "ID"
+msgstr "ID"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_stock_request_orders
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "In Progress"
+msgstr "En proceso"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Increase quantity"
+msgstr "Aumentar cantidad"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Information"
+msgstr "Información"
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Invalid expected date."
+msgstr "Fecha esperada inválida."
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Invalid product selected."
+msgstr "Producto seleccionado inválido."
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Invalid quantity %s."
+msgstr "Cantidad inválida %s."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_stock_request_orders
+msgid "Lines"
+msgstr "Líneas"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_breadcrumbs_stock_request
+msgid "New"
+msgstr "Nueva"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "New Stock Request"
+msgstr "Nueva solicitud de abastecimiento"
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/models/stock_request_order.py:0
+msgid "New portal stock request %(name)s"
+msgstr "Nueva solicitud de abastecimiento del portal %(name)s"
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Newest"
+msgstr "Más reciente"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Next page"
+msgstr "Página siguiente"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "No products found."
+msgstr "No se encontraron productos."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "No products match your search."
+msgstr "Ningún producto coincide con la búsqueda."
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "No warehouse is configured for the current company."
+msgstr "No hay depósito configurado para la compañía actual."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Order lines"
+msgstr "Líneas del pedido"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Previous page"
+msgstr "Página anterior"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Product"
+msgstr "Producto"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Products"
+msgstr "Productos"
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Quantities must be greater than zero."
+msgstr "Las cantidades deben ser mayores que cero."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Quantity"
+msgstr "Cantidad"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Ref:"
+msgstr "Ref:"
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_stock_request_orders
+msgid "Reference"
+msgstr "Referencia"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Remove line"
+msgstr "Eliminar línea"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Request details"
+msgstr "Detalles de la solicitud"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Requested Quantity"
+msgstr "Cantidad solicitada"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Requested by:"
+msgstr "Solicitado por:"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Search by reference or name..."
+msgstr "Buscar por código o descripción..."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Search products"
+msgstr "Buscar productos"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Source Warehouse:"
+msgstr "Depósito origen:"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_stock_request_orders
+msgid "Status"
+msgstr "Estado"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Status:"
+msgstr "Estado:"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Stock Request"
+msgstr "Solicitud de abastecimiento"
+
+#. module: stock_request_portal
+#: model:ir.model.fields,field_description:stock_request_portal.field_res_partner__stock_request_location_id
+#: model:ir.model.fields,field_description:stock_request_portal.field_res_users__stock_request_location_id
+msgid "Stock Request Destination Location"
+msgstr "Ubicación destino de solicitudes de stock"
+
+#. module: stock_request_portal
+#: model:ir.model,name:stock_request_portal.model_stock_request_order
+msgid "Stock Request Order"
+msgstr "Pedido de abastecimiento"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_breadcrumbs_stock_request
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_home_stock_request
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_stock_request_orders
+msgid "Stock Requests"
+msgstr "Solicitudes de abastecimiento"
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/models/stock_request_order.py:0
+msgid ""
+"Stock request order %(name)s was submitted from the portal by %(user)s and "
+"is pending review."
+msgstr ""
+"El pedido de abastecimiento %(name)s fue enviado desde el portal por "
+"%(user)s y está pendiente de revisión."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_stock_request_orders
+msgid "There are currently no stock requests for your account."
+msgstr "Actualmente no hay solicitudes de abastecimiento para su cuenta."
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "This document does not exist."
+msgstr "Este documento no existe."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "To Purchase"
+msgstr "A comprar"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_my_stock_request_orders
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "To Review"
+msgstr "A revisar"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Unit"
+msgstr "Unidad"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid "Warehouse:"
+msgstr "Depósito:"
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "You are not allowed to access this document."
+msgstr "No tiene permiso para acceder a este documento."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid ""
+"Your contact has no stock request destination\n"
+"                        locations configured yet. Please contact us\n"
+"                        before submitting a request."
+msgstr ""
+"Su contacto aún no tiene configuradas ubicaciones destino de solicitudes de "
+"stock. Contáctenos antes de enviar una solicitud."
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid ""
+"Your contact has no stock request destination locations configured yet. "
+"Please contact us."
+msgstr ""
+"Su contacto aún no tiene configuradas ubicaciones destino de solicitudes de "
+"stock. Contáctenos."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_page
+msgid ""
+"Your request has been submitted and is pending review\n"
+"                        by our team."
+msgstr ""
+"Su solicitud fue enviada y está pendiente de revisión por nuestro equipo."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid ""
+"Your request will be reviewed by our team. Available\n"
+"                                        stock is transferred directly and missing quantities\n"
+"                                        are purchased from our suppliers."
+msgstr ""
+"Nuestro equipo revisará su solicitud. El stock disponible se transfiere "
+"directamente y las cantidades faltantes se compran a nuestros proveedores."

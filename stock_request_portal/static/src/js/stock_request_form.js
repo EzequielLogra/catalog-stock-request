@@ -2,14 +2,80 @@
 
 const linesContainer = document.querySelector("#stock_request_lines");
 const lineTemplate = document.querySelector("#o_sr_line_template");
-const noLinesRow = document.querySelector("#o_sr_no_lines");
+const noLinesHint = document.querySelector("#o_sr_no_lines");
+const noLinesError = document.querySelector("#o_sr_no_lines_error");
 const lineCountBadge = document.querySelector("#o_sr_line_count");
+const totalQtyLabel = document.querySelector("#o_sr_total_qty");
 const categoryBar = document.querySelector("#o_sr_categories");
+const productGrid = document.querySelector("#o_sr_product_grid");
+const pager = document.querySelector("#o_sr_pager");
+const searchInput = document.querySelector("#o_sr_search");
+const noResults = document.querySelector("#o_sr_no_results");
 
 if (linesContainer && lineTemplate) {
     // ------------------------------------------------------------------
-    // Category filtering (client side, no page reload)
+    // Search + category filtering + pagination (client side, no page
+    // reload, so the order lines are never lost)
     // ------------------------------------------------------------------
+    const productCols = [...document.querySelectorAll(".o_sr_product_col")];
+    const perPage = parseInt(productGrid?.dataset.perPage, 10) || 20;
+    let currentCategory = "";
+    let currentPage = 1;
+    let searchTerms = [];
+
+    // Case and accent insensitive matching.
+    const normalize = (text) =>
+        (text || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase();
+
+    const searchIndex = new Map(
+        productCols.map((col) => {
+            const data =
+                col.querySelector(".o_sr_product_card")?.dataset || {};
+            return [
+                col,
+                normalize(`${data.productRef} ${data.productName}`),
+            ];
+        })
+    );
+
+    const renderCatalog = () => {
+        const matching = productCols.filter(
+            (col) =>
+                (!currentCategory ||
+                    col.querySelector(".o_sr_product_card")?.dataset
+                        .categoryId === currentCategory) &&
+                searchTerms.every((term) =>
+                    searchIndex.get(col).includes(term)
+                )
+        );
+        noResults?.classList.toggle(
+            "d-none",
+            !productCols.length || matching.length > 0
+        );
+        const pageCount = Math.max(1, Math.ceil(matching.length / perPage));
+        currentPage = Math.min(Math.max(1, currentPage), pageCount);
+        const visible = new Set(
+            matching.slice((currentPage - 1) * perPage, currentPage * perPage)
+        );
+        productCols.forEach((col) =>
+            col.classList.toggle("d-none", !visible.has(col))
+        );
+        if (pager) {
+            pager.classList.toggle("d-none", pageCount <= 1);
+            pager.classList.toggle("d-flex", pageCount > 1);
+            pager.querySelector("#o_sr_page_current").textContent =
+                currentPage;
+            pager.querySelector("#o_sr_page_total").textContent = pageCount;
+            pager.querySelector(".o_sr_page_prev").disabled =
+                currentPage <= 1;
+            pager.querySelector(".o_sr_page_next").disabled =
+                currentPage >= pageCount;
+        }
+    };
+
     if (categoryBar) {
         categoryBar.addEventListener("click", (event) => {
             const chip = event.target.closest(".o_sr_category_chip");
@@ -20,18 +86,47 @@ if (linesContainer && lineTemplate) {
                 .querySelectorAll(".o_sr_category_chip")
                 .forEach((element) => element.classList.remove("active"));
             chip.classList.add("active");
-            const categoryId = chip.dataset.categoryId;
-            document
-                .querySelectorAll(".o_sr_product_card")
-                .forEach((card) => {
-                    const match =
-                        !categoryId ||
-                        card.dataset.categoryId === categoryId;
-                    const col = card.closest(".o_sr_product_col") || card;
-                    col.style.display = match ? "" : "none";
-                });
+            currentCategory = chip.dataset.categoryId;
+            currentPage = 1;
+            renderCatalog();
         });
     }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            searchTerms = normalize(searchInput.value)
+                .split(/\s+/)
+                .filter(Boolean);
+            currentPage = 1;
+            renderCatalog();
+        });
+        // Enter must not submit the order form.
+        searchInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+            }
+        });
+    }
+
+    if (pager) {
+        pager.addEventListener("click", (event) => {
+            const button = event.target.closest(".o_sr_page_btn");
+            if (!button) {
+                return;
+            }
+            currentPage += button.classList.contains("o_sr_page_next")
+                ? 1
+                : -1;
+            renderCatalog();
+            // Only bring the list back into view when its top was
+            // scrolled out; never push the page down.
+            if (productGrid && productGrid.getBoundingClientRect().top < 0) {
+                productGrid.scrollIntoView({ block: "start" });
+            }
+        });
+    }
+
+    renderCatalog();
 
     // ------------------------------------------------------------------
     // Order lines management
@@ -42,10 +137,23 @@ if (linesContainer && lineTemplate) {
         return Number.isFinite(qty) && qty > 0 ? qty : 1;
     };
 
-    const updateLineCount = () => {
+    const updateSummary = () => {
+        const lines = [...linesContainer.querySelectorAll(".o_sr_line")];
         if (lineCountBadge) {
-            lineCountBadge.textContent =
-                linesContainer.querySelectorAll(".o_sr_line").length;
+            lineCountBadge.textContent = lines.length;
+        }
+        if (totalQtyLabel) {
+            totalQtyLabel.textContent = lines.reduce(
+                (total, line) =>
+                    total + toQty(line.querySelector(".o_sr_qty")?.value),
+                0
+            );
+        }
+        if (noLinesHint) {
+            noLinesHint.classList.toggle("d-none", lines.length > 0);
+        }
+        if (noLinesError && lines.length) {
+            noLinesError.classList.add("d-none");
         }
     };
 
@@ -57,7 +165,7 @@ if (linesContainer && lineTemplate) {
     const findRow = (productId) => {
         return linesContainer
             .querySelector(`.o_sr_product[value="${productId}"]`)
-            ?.closest("tr");
+            ?.closest(".o_sr_line");
     };
 
     const setCardQty = (card, qty) => {
@@ -103,6 +211,7 @@ if (linesContainer && lineTemplate) {
                 row,
                 toQty(card.querySelector(".o_sr_card_qty")?.value)
             );
+            updateSummary();
         }
     };
 
@@ -115,12 +224,7 @@ if (linesContainer && lineTemplate) {
         if (card) {
             setCardQty(card, toQty(row.querySelector(".o_sr_qty")?.value));
         }
-    };
-
-    const removeNoLinesHint = () => {
-        if (noLinesRow && noLinesRow.isConnected) {
-            noLinesRow.remove();
-        }
+        updateSummary();
     };
 
     const addProduct = (card) => {
@@ -133,17 +237,19 @@ if (linesContainer && lineTemplate) {
         if (existingRow) {
             setRowQty(existingRow, qty);
             existingRow.querySelector(".o_sr_qty").focus();
+            updateSummary();
             return;
         }
-        removeNoLinesHint();
         const row = lineTemplate.content.firstElementChild.cloneNode(true);
+        row.querySelector(".o_sr_line_ref").textContent =
+            card.dataset.productRef || "";
         row.querySelector(".o_sr_line_name").textContent =
             card.dataset.productName || "";
         row.querySelector(".o_sr_product").value = productId;
         row.querySelector(".o_sr_qty").value = qty;
         linesContainer.appendChild(row);
         setCardAdded(productId, true);
-        updateLineCount();
+        updateSummary();
     };
 
     const stepCardQty = (card, delta) => {
@@ -184,7 +290,7 @@ if (linesContainer && lineTemplate) {
         }
         const lineInput = event.target.closest(".o_sr_qty");
         if (lineInput) {
-            syncCardFromRow(lineInput.closest("tr"));
+            syncCardFromRow(lineInput.closest(".o_sr_line"));
         }
     };
     document.addEventListener("input", syncQty);
@@ -201,20 +307,20 @@ if (linesContainer && lineTemplate) {
         if (card) {
             applyCardQty(card);
         } else {
-            syncCardFromRow(input.closest("tr"));
+            syncCardFromRow(input.closest(".o_sr_line"));
         }
     });
 
     linesContainer.addEventListener("click", (event) => {
         const button = event.target.closest(".o_sr_remove");
         if (button) {
-            const row = button.closest("tr");
+            const row = button.closest(".o_sr_line");
             const input = row.querySelector(".o_sr_product");
             if (input) {
                 setCardAdded(input.value, false);
             }
             row.remove();
-            updateLineCount();
+            updateSummary();
         }
     });
 
@@ -223,11 +329,7 @@ if (linesContainer && lineTemplate) {
         form.addEventListener("submit", (event) => {
             if (!linesContainer.querySelector(".o_sr_line")) {
                 event.preventDefault();
-                removeNoLinesHint();
-                linesContainer.insertAdjacentHTML(
-                    "beforeend",
-                    '<tr class="table-danger"><td colspan="3">Add at least one product line to submit a request.</td></tr>'
-                );
+                noLinesError?.classList.remove("d-none");
             }
         });
     }

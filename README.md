@@ -23,8 +23,11 @@ Permite que clientes con usuario portal creen pedidos de abastecimiento
 (`stock.request.order`) desde el portal `/my`:
 
 - Formulario multi-linea con el stock libre visible por producto (sin precios)
-- Crea la orden en borrador hacia la ubicacion destino configurada en el
-  contacto del cliente (`stock_request_location_id`)
+- Selector de ubicacion destino: el cliente puede tener varias ubicaciones
+  destino (una por contacto hijo tipo *entrega*, campo
+  `stock_request_location_id` en cada uno); si no elige o envia una invalida,
+  se usa la primera ubicacion disponible. Archivar el contacto hijo (o vaciar
+  su campo) lo quita del selector.
 - Notifica por email a los usuarios del grupo *Stock Request Manager* y deja
   registro en el chatter
 - Un admin confirma desde el backend y `catalog_stock_request` divide
@@ -50,10 +53,26 @@ todo el flujo).
 
 1. En el contacto del cliente, configurar **Stock Request Destination
    Location** (ubicacion interna/transito destino de las transferencias).
+   Para varios destinos, crear contactos hijos (tipo *entrega*) con su
+   ubicacion cada uno; el portal los muestra en el selector. Para dar de
+   baja un destino, archivar el contacto hijo o vaciar su campo.
 2. Crear el usuario portal desde el contacto del cliente
    (Contacto -> *Conceder acceso al portal*).
 3. Rutas: regla interna deposito -> ubicacion cliente y regla *buy* del
    deposito para que la confirmacion genere transferencias y RFQs.
+
+### Colores del catalogo del portal
+
+El catalogo toma los colores del tema del sitio web. Para personalizarlos sin
+tocar el modulo, crear estos parametros del sistema (Ajustes -> Tecnico ->
+Parametros del sistema) con un color hexadecimal (`#rgb` o `#rrggbb`):
+
+| Parametro | Se aplica a |
+| --- | --- |
+| `stock_request_portal.color_primary` | Titulos, categoria activa, total |
+| `stock_request_portal.color_accent` | Selector de cantidad, boton agregar, paginador, contador de lineas, boton de envio |
+
+Un valor vacio o invalido se ignora y se usa el color del tema.
 
 ## Notas
 
