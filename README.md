@@ -76,6 +76,9 @@ todo el flujo).
    que la venta genere la transferencia interna. Los pedidos del portal para
    esa obra salen de la pre-obra (no de la ubicacion origen de la regla
    interna), no generan compra y se rechazan si superan lo disponible ahi.
+   El catalogo del portal muestra para esa obra solo los productos con
+   stock libre en su pre-obra, con la cantidad disponible; al cambiar de
+   obra se vacia el pedido en curso.
 
 ### Colores del catalogo del portal
 

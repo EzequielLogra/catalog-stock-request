@@ -1,3 +1,4 @@
+import json
 import re
 
 import pytz
@@ -123,6 +124,28 @@ class CustomerPortal(CustomerPortal):
             ),
         )
 
+    def _get_stock_request_set_aside_quantities(self, locations):
+        """Return {location id: {product id: free quantity}} for the
+        destination locations that have stock set aside. The catalog only
+        offers those products for them; other locations are not limited."""
+        result = {}
+        Quant = request.env["stock.quant"].sudo()
+        for location in locations:
+            source_location = location._get_stock_request_source_location()
+            if not source_location:
+                continue
+            groups = Quant._read_group(
+                [("location_id", "=", source_location.id)],
+                groupby=["product_id"],
+                aggregates=["quantity:sum", "reserved_quantity:sum"],
+            )
+            result[location.id] = {
+                product.id: quantity - reserved
+                for product, quantity, reserved in groups
+                if quantity - reserved > 0
+            }
+        return result
+
     def _get_stock_request_tz(self):
         """Timezone in which the portal user reads and types dates."""
         return pytz.timezone(
@@ -143,6 +166,7 @@ class CustomerPortal(CustomerPortal):
 
     def _prepare_stock_request_form_values(self, error=None):
         values = self._prepare_portal_layout_values()
+        locations = self._get_stock_request_destination_locations()
         values.update(
             {
                 "page_name": "stock_request_order_new",
@@ -152,7 +176,10 @@ class CustomerPortal(CustomerPortal):
                 "products_per_page": self._stock_request_products_per_page,
                 "sr_style": self._get_stock_request_portal_style(),
                 "warehouse": self._get_stock_request_warehouse(),
-                "locations": self._get_stock_request_destination_locations(),
+                "locations": locations,
+                "set_aside_json": json.dumps(
+                    self._get_stock_request_set_aside_quantities(locations)
+                ),
                 "default_expected_date": pytz.utc.localize(
                     fields.Datetime.now()
                 )

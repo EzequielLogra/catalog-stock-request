@@ -1,3 +1,5 @@
+import html
+import json
 import re
 
 from odoo import Command, fields
@@ -447,4 +449,20 @@ class TestStockRequestPortal(HttpCase):
             self.env["stock.request.order"].search_count(
                 [("requested_by", "=", self.portal_user.id)]
             )
+        )
+
+    def test_portal_catalog_carries_set_aside_quantities(self):
+        product = self.env["product.product"].create(
+            {"name": "Storable Product", "type": "consu", "is_storable": True}
+        )
+        self._set_aside_stock(self.child_partner, product, 4)
+        self.authenticate("portal_client", "P0rtalClient1!")
+        response = self.url_open("/my/stock-request-orders/new")
+        self.assertEqual(response.status_code, 200)
+        match = re.search(r'data-set-aside="([^"]*)"', response.text)
+        self.assertTrue(match, "Set aside quantities not found in page")
+        set_aside = json.loads(html.unescape(match.group(1)))
+        # only the location with stock set aside is limited
+        self.assertEqual(
+            set_aside, {str(self.client_location_b.id): {str(product.id): 4.0}}
         )

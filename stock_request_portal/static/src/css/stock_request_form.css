@@ -136,6 +136,11 @@
     font-size: 0.6875rem;
 }
 
+.o_sr_card_available {
+    color: var(--o-sr-muted);
+    font-size: 0.6875rem;
+}
+
 .o_sr_card_actions {
     margin-top: 1rem;
     padding-top: 0.75rem;

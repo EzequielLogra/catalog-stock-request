@@ -246,6 +246,7 @@
                                 class="row g-3 mb-3"
                                 id="o_sr_product_grid"
                                 t-att-data-per-page="products_per_page"
+                                t-att-data-set-aside="set_aside_json"
                             >
                                 <t t-foreach="products" t-as="product">
                                     <!-- Only the first page is visible until the
@@ -268,6 +269,11 @@
                                                 class="o_sr_card_ref"
                                             >
                                                 Ref: <t t-out="product.default_code" />
+                                            </div>
+                                            <!-- Shown by the client only for
+                                                 locations with stock set aside. -->
+                                            <div class="o_sr_card_available d-none">
+                                                Available: <span class="o_sr_card_available_qty" />
                                             </div>
                                             <div class="o_sr_card_actions mt-auto d-flex gap-2">
                                                 <div class="o_sr_qty_stepper d-flex">

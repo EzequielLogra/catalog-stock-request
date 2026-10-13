@@ -11,6 +11,7 @@ const productGrid = document.querySelector("#o_sr_product_grid");
 const pager = document.querySelector("#o_sr_pager");
 const searchInput = document.querySelector("#o_sr_search");
 const noResults = document.querySelector("#o_sr_no_results");
+const locationSelect = document.querySelector("#location_id");
 
 if (linesContainer && lineTemplate) {
     // ------------------------------------------------------------------
@@ -41,9 +42,51 @@ if (linesContainer && lineTemplate) {
         })
     );
 
+    // Stock set aside per destination location, as
+    // {locationId: {productId: qty}}. A location that is not listed is
+    // not limited: it offers the whole catalog.
+    const setAside = JSON.parse(productGrid?.dataset.setAside || "{}");
+    const cardOf = (col) => col.querySelector(".o_sr_product_card");
+    // Quantity the selected location may still request, null if unlimited.
+    const availableQty = (card) => {
+        const quantities = setAside[locationSelect?.value];
+        return quantities ? quantities[card.dataset.productId] || 0 : null;
+    };
+    const isOffered = (col) => availableQty(cardOf(col)) !== 0;
+
+    // Show what each card offers to the selected location and recount
+    // the category chips over the products it may request.
+    const applyLocation = () => {
+        const counts = new Map();
+        productCols.forEach((col) => {
+            const card = cardOf(col);
+            const available = availableQty(card);
+            const label = card.querySelector(".o_sr_card_available");
+            if (label) {
+                label.classList.toggle("d-none", available === null);
+                label.querySelector(".o_sr_card_available_qty").textContent =
+                    available === null ? "" : available;
+            }
+            if (isOffered(col)) {
+                const categoryId = card.dataset.categoryId;
+                counts.set(categoryId, (counts.get(categoryId) || 0) + 1);
+                counts.set("", (counts.get("") || 0) + 1);
+            }
+        });
+        categoryBar?.querySelectorAll(".o_sr_category_chip").forEach((chip) => {
+            const count = counts.get(chip.dataset.categoryId) || 0;
+            chip.querySelector(".o_sr_chip_count").textContent = count;
+            chip.classList.toggle(
+                "d-none",
+                !count && chip.dataset.categoryId !== ""
+            );
+        });
+    };
+
     const renderCatalog = () => {
         const matching = productCols.filter(
             (col) =>
+                isOffered(col) &&
                 (!currentCategory ||
                     col.querySelector(".o_sr_product_card")?.dataset
                         .categoryId === currentCategory) &&
@@ -126,6 +169,7 @@ if (linesContainer && lineTemplate) {
         });
     }
 
+    applyLocation();
     renderCatalog();
 
     // ------------------------------------------------------------------
@@ -260,7 +304,10 @@ if (linesContainer && lineTemplate) {
         if (!input) {
             return;
         }
-        input.value = Math.max(1, toQty(input.value) + delta);
+        const available = availableQty(card);
+        const qty = Math.max(1, toQty(input.value) + delta);
+        input.value =
+            available === null ? qty : Math.max(1, Math.min(qty, available));
         applyCardQty(card);
     };
 
@@ -323,6 +370,33 @@ if (linesContainer && lineTemplate) {
             updateSummary();
         }
     });
+
+    // Each location offers its own products and quantities: changing it
+    // starts the order over.
+    if (locationSelect) {
+        locationSelect.addEventListener("change", () => {
+            linesContainer.querySelectorAll(".o_sr_line").forEach((row) => {
+                const input = row.querySelector(".o_sr_product");
+                if (input) {
+                    setCardAdded(input.value, false);
+                }
+                row.remove();
+            });
+            updateSummary();
+            categoryBar
+                ?.querySelectorAll(".o_sr_category_chip")
+                .forEach((chip) =>
+                    chip.classList.toggle(
+                        "active",
+                        chip.dataset.categoryId === ""
+                    )
+                );
+            currentCategory = "";
+            currentPage = 1;
+            applyLocation();
+            renderCatalog();
+        });
+    }
 
     const form = document.querySelector("#stock_request_order_form");
     if (form) {

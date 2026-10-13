@@ -479,3 +479,8 @@ msgstr ""
 msgid "Only %(free)s %(uom)s of %(product)s are available for %(location)s."
 msgstr ""
 "Solo hay %(free)s %(uom)s de %(product)s disponibles para %(location)s."
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "Available:"
+msgstr "Disponible:"
