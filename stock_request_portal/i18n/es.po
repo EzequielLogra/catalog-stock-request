@@ -375,3 +375,14 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
 msgid "Available:"
 msgstr "Disponible:"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid ""
+"Changing the destination location clears the current order. Continue?"
+msgstr "Al cambiar de ubicación destino se borra el pedido actual. ¿Continuar?"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
+msgid "No products are set aside for this location."
+msgstr "No hay productos apartados para esta ubicación."

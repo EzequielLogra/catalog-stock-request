@@ -90,30 +90,34 @@ class CustomerPortal(CustomerPortal):
             .search([("company_id", "=", company.id)], limit=1)
         )
 
-    def _get_stock_request_categories(self):
+    def _get_stock_request_categories(self, products, offered_products):
         """Return [{"category": record, "count": int}, ...] for the catalog
-        chips, alphabetically by category."""
-        groups = request.env["product.product"].sudo()._read_group(
-            [("type", "in", ["product", "consu"])],
-            groupby=["categ_id"],
-            aggregates=["__count"],
-        )
-        counts = {
-            categ.id: count for categ, count in groups if categ
-        }
+        chips, alphabetically by category. Every category of the catalog
+        gets a chip; the count is over the products offered to the
+        location selected by default."""
+        counts = {}
+        for product in offered_products:
+            counts[product.categ_id.id] = counts.get(product.categ_id.id, 0) + 1
+        category_ids = {product.categ_id.id for product in products}
         categories = request.env["product.category"].sudo().search(
-            [("id", "in", list(counts))],
+            [("id", "in", list(category_ids))],
             order="complete_name asc",
         )
         return [
-            {"category": category, "count": counts[category.id]}
+            {"category": category, "count": counts.get(category.id, 0)}
             for category in categories
         ]
 
-    def _get_stock_request_products(self):
-        products = request.env["product.product"].sudo().search(
-            [("type", "in", ["product", "consu"])]
-        )
+    def _get_stock_request_products(self, locations, set_aside):
+        """Products of the catalog. A user whose locations all have stock
+        set aside only gets the products set aside for them."""
+        domain = [("type", "in", ["product", "consu"])]
+        if locations and all(location.id in set_aside for location in locations):
+            product_ids = set()
+            for location in locations:
+                product_ids.update(set_aside[location.id])
+            domain.append(("id", "in", list(product_ids)))
+        products = request.env["product.product"].sudo().search(domain)
         # Dotted order terms like "categ_id.complete_name" are not
         # supported by the ORM here, so sort in Python (small catalogs).
         return sorted(
@@ -167,19 +171,36 @@ class CustomerPortal(CustomerPortal):
     def _prepare_stock_request_form_values(self, error=None):
         values = self._prepare_portal_layout_values()
         locations = self._get_stock_request_destination_locations()
+        set_aside = self._get_stock_request_set_aside_quantities(locations)
+        products = self._get_stock_request_products(locations, set_aside)
+        # What the location selected by default (the first one) may
+        # request; None when it is not limited. The page is rendered for
+        # it and the client takes over when another location is chosen.
+        default_available = set_aside.get(locations[:1].id)
+        offered_products = [
+            product
+            for product in products
+            if default_available is None or product.id in default_available
+        ]
+        per_page = self._stock_request_products_per_page
         values.update(
             {
                 "page_name": "stock_request_order_new",
                 "error": error,
-                "products": self._get_stock_request_products(),
-                "categories": self._get_stock_request_categories(),
-                "products_per_page": self._stock_request_products_per_page,
+                "products": products,
+                "categories": self._get_stock_request_categories(
+                    products, offered_products
+                ),
+                "offered_count": len(offered_products),
+                "first_page_product_ids": {
+                    product.id for product in offered_products[:per_page]
+                },
+                "default_available": default_available,
+                "products_per_page": per_page,
                 "sr_style": self._get_stock_request_portal_style(),
                 "warehouse": self._get_stock_request_warehouse(),
                 "locations": locations,
-                "set_aside_json": json.dumps(
-                    self._get_stock_request_set_aside_quantities(locations)
-                ),
+                "set_aside_json": json.dumps(set_aside),
                 "default_expected_date": pytz.utc.localize(
                     fields.Datetime.now()
                 )

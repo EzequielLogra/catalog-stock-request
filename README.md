@@ -79,6 +79,9 @@ todo el flujo).
    El catalogo del portal muestra para esa obra solo los productos con
    stock libre en su pre-obra, con la cantidad disponible; al cambiar de
    obra se vacia el pedido en curso.
+   Si todas las obras del supervisor tienen pre-obra, la pagina solo
+   incluye los productos apartados para ellas: el resto del catalogo no se
+   envia al navegador.
 
 ### Colores del catalogo del portal
 

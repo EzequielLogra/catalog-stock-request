@@ -129,7 +129,8 @@ class TestStockRequestPortal(HttpCase):
         self.authenticate("portal_client", "P0rtalClient1!")
         response = self.url_open("/my/stock-request-orders/new")
         self.assertEqual(response.status_code, 200)
-        # all products travel in the page for client-side filtering
+        # locations without stock set aside get the whole catalog, filtered
+        # client side
         self.assertIn("Product A", response.text)
         self.assertIn("Product B", response.text)
         # category chip with its display name is rendered
@@ -466,3 +467,18 @@ class TestStockRequestPortal(HttpCase):
         self.assertEqual(
             set_aside, {str(self.client_location_b.id): {str(product.id): 4.0}}
         )
+
+    def test_portal_catalog_only_renders_set_aside_products(self):
+        """A user whose locations all have stock set aside never receives
+        the rest of the catalog."""
+        product = self.env["product.product"].create(
+            {"name": "Storable Product", "type": "consu", "is_storable": True}
+        )
+        self._set_aside_stock(self.child_partner, product, 4)
+        self.client_partner.stock_request_supervisor_ids = [Command.clear()]
+        self.authenticate("portal_client", "P0rtalClient1!")
+        response = self.url_open("/my/stock-request-orders/new")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('data-product-name="Storable Product"', response.text)
+        self.assertNotIn('data-product-name="Product A"', response.text)
+        self.assertNotIn('data-product-name="Product B"', response.text)

@@ -12,6 +12,10 @@ const pager = document.querySelector("#o_sr_pager");
 const searchInput = document.querySelector("#o_sr_search");
 const noResults = document.querySelector("#o_sr_no_results");
 const locationSelect = document.querySelector("#location_id");
+const nothingSetAside = document.querySelector("#o_sr_nothing_set_aside");
+const locationChangeConfirm = document.querySelector(
+    "#o_sr_location_change_confirm"
+);
 
 if (linesContainer && lineTemplate) {
     // ------------------------------------------------------------------
@@ -53,6 +57,7 @@ if (linesContainer && lineTemplate) {
         return quantities ? quantities[card.dataset.productId] || 0 : null;
     };
     const isOffered = (col) => availableQty(cardOf(col)) !== 0;
+    let offeredCount = productCols.length;
 
     // Show what each card offers to the selected location and recount
     // the category chips over the products it may request.
@@ -73,6 +78,7 @@ if (linesContainer && lineTemplate) {
                 counts.set("", (counts.get("") || 0) + 1);
             }
         });
+        offeredCount = counts.get("") || 0;
         categoryBar?.querySelectorAll(".o_sr_category_chip").forEach((chip) => {
             const count = counts.get(chip.dataset.categoryId) || 0;
             chip.querySelector(".o_sr_chip_count").textContent = count;
@@ -94,9 +100,13 @@ if (linesContainer && lineTemplate) {
                     searchIndex.get(col).includes(term)
                 )
         );
+        nothingSetAside?.classList.toggle(
+            "d-none",
+            !productCols.length || offeredCount > 0
+        );
         noResults?.classList.toggle(
             "d-none",
-            !productCols.length || matching.length > 0
+            !offeredCount || matching.length > 0
         );
         const pageCount = Math.max(1, Math.ceil(matching.length / perPage));
         currentPage = Math.min(Math.max(1, currentPage), pageCount);
@@ -374,7 +384,18 @@ if (linesContainer && lineTemplate) {
     // Each location offers its own products and quantities: changing it
     // starts the order over.
     if (locationSelect) {
+        let currentLocation = locationSelect.value;
         locationSelect.addEventListener("change", () => {
+            const message = locationChangeConfirm?.textContent.trim();
+            if (
+                message &&
+                linesContainer.querySelector(".o_sr_line") &&
+                !window.confirm(message)
+            ) {
+                locationSelect.value = currentLocation;
+                return;
+            }
+            currentLocation = locationSelect.value;
             linesContainer.querySelectorAll(".o_sr_line").forEach((row) => {
                 const input = row.querySelector(".o_sr_product");
                 if (input) {

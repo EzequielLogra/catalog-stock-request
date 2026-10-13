@@ -193,6 +193,12 @@
                                                 </option>
                                             </t>
                                         </select>
+                                        <!-- Read by the client before it clears
+                                             the order lines. -->
+                                        <span
+                                            class="d-none"
+                                            id="o_sr_location_change_confirm"
+                                        >Changing the destination location clears the current order. Continue?</span>
                                     </div>
                                 </div>
                             </div>
@@ -221,7 +227,7 @@
                                         <span>All</span>
                                         <span
                                             class="o_sr_chip_count"
-                                            t-out="len(products)"
+                                            t-out="offered_count"
                                         />
                                     </button>
                                     <t t-foreach="categories" t-as="cat_info">
@@ -229,7 +235,7 @@
                                         <t t-set="cat_count" t-value="cat_info['count']" />
                                         <button
                                             type="button"
-                                            class="o_sr_category_chip"
+                                            t-attf-class="o_sr_category_chip #{'' if cat_count else 'd-none'}"
                                             t-att-data-category-id="cat.id"
                                         >
                                             <span t-out="cat.display_name" />
@@ -249,10 +255,11 @@
                                 t-att-data-set-aside="set_aside_json"
                             >
                                 <t t-foreach="products" t-as="product">
-                                    <!-- Only the first page is visible until the
+                                    <!-- Only the first page of what the default
+                                         location may request is visible until the
                                          client-side pager takes over. -->
                                     <div
-                                        t-attf-class="col-6 col-md-4 col-xl-3 o_sr_product_col #{'d-none' if product_index >= products_per_page else ''}"
+                                        t-attf-class="col-6 col-md-4 col-xl-3 o_sr_product_col #{'' if product.id in first_page_product_ids else 'd-none'}"
                                     >
                                         <div
                                             class="o_sr_product_card h-100 d-flex flex-column"
@@ -270,10 +277,16 @@
                                             >
                                                 Ref: <t t-out="product.default_code" />
                                             </div>
-                                            <!-- Shown by the client only for
-                                                 locations with stock set aside. -->
-                                            <div class="o_sr_card_available d-none">
-                                                Available: <span class="o_sr_card_available_qty" />
+                                            <!-- Only for locations with stock set
+                                                 aside; the client updates it when the
+                                                 location changes. -->
+                                            <div
+                                                t-attf-class="o_sr_card_available #{'d-none' if default_available is None else ''}"
+                                            >
+                                                Available: <span
+                                                    class="o_sr_card_available_qty"
+                                                    t-out="'' if default_available is None else default_available.get(product.id, 0)"
+                                                />
                                             </div>
                                             <div class="o_sr_card_actions mt-auto d-flex gap-2">
                                                 <div class="o_sr_qty_stepper d-flex">
@@ -310,6 +323,14 @@
                                         </div>
                                     </div>
                                 </t>
+                                <div
+                                    t-attf-class="col-12 #{'d-none' if offered_count or not products else ''}"
+                                    id="o_sr_nothing_set_aside"
+                                >
+                                    <div class="alert alert-info mb-0" role="alert">
+                                        No products are set aside for this location.
+                                    </div>
+                                </div>
                                 <div class="col-12 d-none" id="o_sr_no_results">
                                     <div class="alert alert-info mb-0" role="alert">
                                         No products match your search.
@@ -317,7 +338,12 @@
                                 </div>
                                 <div t-if="not products" class="col-12">
                                     <div class="alert alert-info" role="alert">
-                                        No products found.
+                                        <t t-if="default_available is None">
+                                            No products found.
+                                        </t>
+                                        <t t-else="">
+                                            No products are set aside for this location.
+                                        </t>
                                     </div>
                                 </div>
                             </div>
