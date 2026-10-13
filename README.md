@@ -25,9 +25,11 @@ Permite que clientes con usuario portal creen pedidos de abastecimiento
 - Formulario multi-linea con el stock libre visible por producto (sin precios)
 - Selector de ubicacion destino: el cliente puede tener varias ubicaciones
   destino (una por contacto hijo tipo *entrega*, campo
-  `stock_request_location_id` en cada uno); si no elige o envia una invalida,
-  se usa la primera ubicacion disponible. Archivar el contacto hijo (o vaciar
-  su campo) lo quita del selector.
+  `stock_request_location_id` en cada uno). Cada usuario portal solo ve las
+  ubicaciones de los contactos donde figura como supervisor (campo
+  `stock_request_supervisor_ids`); si no elige o envia una invalida, se usa
+  la primera ubicacion disponible. Archivar el contacto hijo (o vaciar su
+  campo, o quitar al supervisor) lo quita del selector.
 - Notifica por email a los usuarios del grupo *Stock Request Manager* y deja
   registro en el chatter
 - Un admin confirma desde el backend y `catalog_stock_request` divide
@@ -56,8 +58,10 @@ todo el flujo).
    Para varios destinos, crear contactos hijos (tipo *entrega*) con su
    ubicacion cada uno; el portal los muestra en el selector. Para dar de
    baja un destino, archivar el contacto hijo o vaciar su campo.
-2. Crear el usuario portal desde el contacto del cliente
-   (Contacto -> *Conceder acceso al portal*).
+2. Crear el usuario portal desde el contacto del supervisor
+   (Contacto -> *Conceder acceso al portal*) y agregarlo en **Stock Request
+   Supervisors** de cada contacto (obra) para la que puede pedir. Sin esa
+   asignacion el usuario no puede crear pedidos.
 3. Rutas: regla interna deposito -> ubicacion cliente y regla *buy* del
    deposito para que la confirmacion genere transferencias y RFQs.
 

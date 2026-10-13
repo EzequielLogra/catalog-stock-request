@@ -65,19 +65,15 @@ class CustomerPortal(CustomerPortal):
 
     def _get_stock_request_destination_locations(self):
         """Return the destination locations the portal user may select:
-        those configured on the commercial partner or on any of its
-        active child contacts (one child contact per delivery point)."""
+        those of the active contacts (one contact per delivery point) the
+        user is assigned to as supervisor."""
         partner = request.env.user.partner_id
         return (
             request.env["res.partner"]
             .sudo()
             .search(
                 [
-                    (
-                        "commercial_partner_id",
-                        "=",
-                        partner.commercial_partner_id.id,
-                    ),
+                    ("stock_request_supervisor_ids", "in", partner.ids),
                     ("active", "=", True),
                 ]
             )

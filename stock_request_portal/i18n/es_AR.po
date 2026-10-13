@@ -456,3 +456,19 @@ msgid ""
 msgstr ""
 "Nuestro equipo revisará su solicitud. El stock disponible se transfiere "
 "directamente y las cantidades faltantes se compran a nuestros proveedores."
+
+#. module: stock_request_portal
+#: model:ir.model.fields,field_description:stock_request_portal.field_res_partner__stock_request_supervisor_ids
+#: model:ir.model.fields,field_description:stock_request_portal.field_res_users__stock_request_supervisor_ids
+msgid "Stock Request Supervisors"
+msgstr "Supervisores de solicitudes de stock"
+
+#. module: stock_request_portal
+#: model:ir.model.fields,help:stock_request_portal.field_res_partner__stock_request_supervisor_ids
+#: model:ir.model.fields,help:stock_request_portal.field_res_users__stock_request_supervisor_ids
+msgid ""
+"Contacts allowed to create stock request orders from the portal for the "
+"destination location of this contact."
+msgstr ""
+"Contactos habilitados para crear pedidos de abastecimiento desde el portal "
+"para la ubicación destino de este contacto."
