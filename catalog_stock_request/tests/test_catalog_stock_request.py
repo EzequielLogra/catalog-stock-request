@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from odoo import Command, fields
 from odoo.exceptions import UserError
 
@@ -102,11 +104,11 @@ class TestSplitPurchase(TestStockRequestPurchase):
         vals.update(order_vals)
         return cls.env["stock.request.order"].create(vals)
 
-    def _set_stock(self, product, qty):
+    def _set_stock(self, product, qty, location=None):
         quant = self.env["stock.quant"].create(
             {
                 "product_id": product.id,
-                "location_id": self.warehouse.lot_stock_id.id,
+                "location_id": (location or self.warehouse.lot_stock_id).id,
                 "inventory_quantity": qty,
             }
         )
@@ -235,3 +237,54 @@ class TestSplitPurchase(TestStockRequestPurchase):
         self.assertEqual(len(order.picking_ids), 1)
         self.assertEqual(order.picking_ids.move_ids.product_uom_qty, 20.0)
         self.assertEqual(len(request.sudo().purchase_ids), 0)
+
+    def _create_set_aside_location(self):
+        return self.env["stock.location"].create(
+            {
+                "name": "Ward A set aside",
+                "location_id": self.warehouse.view_location_id.id,
+                "usage": "internal",
+                "company_id": self.main_company.id,
+            }
+        )
+
+    def _patch_source_location(self, source_location):
+        return patch.object(
+            type(self.env["stock.location"]),
+            "_get_stock_request_source_location",
+            lambda location: source_location,
+        )
+
+    def test_set_aside_stock_supplies_the_request(self):
+        source_location = self._create_set_aside_location()
+        self._set_stock(self.product, 50.0)
+        self._set_stock(self.product, 8.0, location=source_location)
+        with self._patch_source_location(source_location):
+            order = self._create_order(
+                {"product_id": self.product.id, "product_uom_qty": 8.0}
+            )
+            request = order.stock_request_ids
+            self.assertEqual(request.free_qty, 8.0)
+            self.assertEqual(request.qty_to_purchase, 0.0)
+            order.action_confirm()
+        self.assertEqual(request.qty_from_stock, 8.0)
+        self.assertEqual(request.qty_purchased, 0.0)
+        move = order.picking_ids.move_ids
+        self.assertEqual(len(move), 1)
+        self.assertEqual(move.product_uom_qty, 8.0)
+        self.assertEqual(move.location_id, source_location)
+        self.assertEqual(move.location_dest_id, self.ward_location)
+        self.assertEqual(len(request.sudo().purchase_ids), 0)
+
+    def test_set_aside_stock_is_a_cap(self):
+        source_location = self._create_set_aside_location()
+        self._set_stock(self.product, 50.0)
+        self._set_stock(self.product, 8.0, location=source_location)
+        with self._patch_source_location(source_location):
+            order = self._create_order(
+                {"product_id": self.product.id, "product_uom_qty": 9.0}
+            )
+            with self.assertRaises(UserError):
+                order.action_confirm()
+        self.assertEqual(len(order.picking_ids), 0)
+        self.assertEqual(len(order.stock_request_ids.sudo().purchase_ids), 0)

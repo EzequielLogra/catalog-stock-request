@@ -6,6 +6,7 @@ from odoo import fields, http
 from odoo.exceptions import AccessError, MissingError
 from odoo.fields import Command
 from odoo.http import request
+from odoo.tools import float_compare
 
 from odoo.addons.portal.controllers.portal import (
     CustomerPortal,
@@ -190,6 +191,35 @@ class CustomerPortal(CustomerPortal):
             )
         return lines, None
 
+    def _check_stock_request_set_aside_stock(self, location, lines):
+        """Return an error when the lines ask for more than the stock set
+        aside for the destination location. Locations without stock set
+        aside are not limited."""
+        source_location = location._get_stock_request_source_location()
+        if not source_location:
+            return None
+        precision = request.env["decimal.precision"].precision_get(
+            "Product Unit of Measure"
+        )
+        quantities = {}
+        for line in lines:
+            quantities.setdefault(line["product"], 0.0)
+            quantities[line["product"]] += line["qty"]
+        for product, qty in quantities.items():
+            free_qty = max(
+                0.0, product.with_context(location=source_location.id).free_qty
+            )
+            if float_compare(qty, free_qty, precision_digits=precision) > 0:
+                return request.env._(
+                    "Only %(free)s %(uom)s of %(product)s are available for "
+                    "%(location)s.",
+                    free=free_qty,
+                    uom=product.uom_id.name,
+                    product=product.display_name,
+                    location=location.name,
+                )
+        return None
+
     # ------------------------------------------------------------------
     # /my home counter
     # ------------------------------------------------------------------
@@ -346,6 +376,8 @@ class CustomerPortal(CustomerPortal):
         lines = []
         if not error:
             lines, error = self._parse_stock_request_lines(form)
+        if not error:
+            error = self._check_stock_request_set_aside_stock(location, lines)
 
         warehouse = self._get_stock_request_warehouse()
         if not error and not warehouse:

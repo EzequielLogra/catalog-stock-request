@@ -10,7 +10,8 @@ class StockRequest(models.Model):
         string="Free To Use",
         compute="_compute_free_qty",
         digits="Product Unit of Measure",
-        help="Free quantity in the warehouse stock location.",
+        help="Free quantity in the warehouse stock location, or in the "
+        "location holding the stock set aside for the destination.",
     )
     qty_reserved = fields.Float(
         string="Reserved Quantity",
@@ -45,7 +46,7 @@ class StockRequest(models.Model):
         "the vendor pricelists of the product.",
     )
 
-    @api.depends("product_id", "warehouse_id", "product_uom_id")
+    @api.depends("product_id", "warehouse_id", "product_uom_id", "location_id")
     def _compute_free_qty(self):
         for request in self:
             request.free_qty = request._get_free_qty()
@@ -76,10 +77,13 @@ class StockRequest(models.Model):
         "free_qty",
         "state",
         "qty_purchased",
+        "location_id",
     )
     def _compute_qty_to_purchase(self):
         for request in self:
-            if request.state == "draft":
+            if request.state == "draft" and request._get_source_location():
+                request.qty_to_purchase = 0.0
+            elif request.state == "draft":
                 request.qty_to_purchase = max(
                     0.0,
                     request.product_uom_qty
@@ -94,13 +98,20 @@ class StockRequest(models.Model):
             seller = request._get_seller(request.product_uom_qty)
             request.suggested_supplier_id = seller.partner_id
 
+    def _get_source_location(self):
+        """Location holding the stock set aside for the destination of this
+        request, if any (see stock.location)."""
+        self.ensure_one()
+        if not self.location_id:
+            return self.env["stock.location"]
+        return self.location_id._get_stock_request_source_location()
+
     def _get_free_qty(self):
         self.ensure_one()
         if not self.product_id or not self.warehouse_id:
             return 0.0
-        product = self.product_id.with_context(
-            location=self.warehouse_id.lot_stock_id.id
-        )
+        location = self._get_source_location() or self.warehouse_id.lot_stock_id
+        product = self.product_id.with_context(location=location.id)
         return self.product_id.uom_id._compute_quantity(
             product.free_qty, self.product_uom_id, rounding_method="HALF-UP"
         )
@@ -156,6 +167,73 @@ class StockRequest(models.Model):
             )
         )[:1]
 
+    def _prepare_procurement_values(self, reference_ids=False):
+        values = super()._prepare_procurement_values(reference_ids=reference_ids)
+        source_location = self._get_source_location()
+        if source_location:
+            values["stock_request_source_location_id"] = source_location.id
+        return values
+
+    def _get_supply_procurement(self, qty):
+        self.ensure_one()
+        supply_route = self._get_supply_route()
+        if not supply_route:
+            raise UserError(
+                self.env._(
+                    "No internal supply route found for product "
+                    "%(product)s to location %(location)s.",
+                    product=self.product_id.display_name,
+                    location=self.location_id.display_name,
+                )
+            )
+        values = self._prepare_procurement_values()
+        values["route_ids"] = supply_route
+        return self.env["stock.rule"].Procurement(
+            self.product_id,
+            qty,
+            self.product_uom_id,
+            self.location_id,
+            self.name,
+            self.name,
+            self.company_id,
+            values,
+        )
+
+    def _launch_reserved_procurement(self):
+        """Supply the request from the stock set aside for its destination.
+        Nothing is purchased: asking for more than what is set aside fails."""
+        self.ensure_one()
+        precision = self.env["decimal.precision"].precision_get(
+            "Product Unit of Measure"
+        )
+        free_qty = max(0.0, self._get_free_qty())
+        if (
+            float_compare(
+                self.product_uom_qty, free_qty, precision_digits=precision
+            )
+            > 0
+        ):
+            raise UserError(
+                self.env._(
+                    "Only %(free)s %(uom)s of %(product)s are set aside for "
+                    "%(location)s, but %(qty)s were requested.",
+                    free=free_qty,
+                    uom=self.product_uom_id.name,
+                    product=self.product_id.display_name,
+                    location=self.location_id.display_name,
+                    qty=self.product_uom_qty,
+                )
+            )
+        self.env["stock.rule"].run(
+            [self._get_supply_procurement(self.product_uom_qty)]
+        )
+        self.write(
+            {
+                "qty_from_stock": self.product_uom_qty,
+                "qty_purchased": 0.0,
+            }
+        )
+
     def _launch_split_procurement(self, purchase_route):
         self.ensure_one()
         precision = self.env["decimal.precision"].precision_get(
@@ -170,30 +248,7 @@ class StockRequest(models.Model):
             qty_to_purchase = 0.0
         procurements = []
         if float_compare(qty_from_stock, 0.0, precision_digits=precision) > 0:
-            supply_route = self._get_supply_route()
-            if not supply_route:
-                raise UserError(
-                    self.env._(
-                        "No internal supply route found for product "
-                        "%(product)s to location %(location)s.",
-                        product=self.product_id.display_name,
-                        location=self.location_id.display_name,
-                    )
-                )
-            values = self._prepare_procurement_values()
-            values["route_ids"] = supply_route
-            procurements.append(
-                self.env["stock.rule"].Procurement(
-                    self.product_id,
-                    qty_from_stock,
-                    self.product_uom_id,
-                    self.location_id,
-                    self.name,
-                    self.name,
-                    self.company_id,
-                    values,
-                )
-            )
+            procurements.append(self._get_supply_procurement(qty_from_stock))
         if float_compare(qty_to_purchase, 0.0, precision_digits=precision) > 0:
             seller = self._get_seller(qty_to_purchase)
             if not seller:
@@ -243,6 +298,7 @@ class StockRequest(models.Model):
         precision = self.env["decimal.precision"].precision_get(
             "Product Unit of Measure"
         )
+        reserved_requests = self.env["stock.request"]
         split_requests = self.env["stock.request"]
         standard_requests = self.env["stock.request"]
         errors = []
@@ -257,7 +313,9 @@ class StockRequest(models.Model):
                 >= 0
             ):
                 continue
-            if (
+            if request._get_source_location():
+                reserved_requests |= request
+            elif (
                 request.order_id
                 and request.order_id.split_purchase
                 and request._get_purchase_route()
@@ -265,6 +323,11 @@ class StockRequest(models.Model):
                 split_requests |= request
             else:
                 standard_requests |= request
+        for request in reserved_requests:
+            try:
+                request._launch_reserved_procurement()
+            except UserError as error:
+                errors.append(str(error))
         for request in split_requests:
             try:
                 request._launch_split_procurement(

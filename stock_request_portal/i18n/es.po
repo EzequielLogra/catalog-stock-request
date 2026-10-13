@@ -363,3 +363,10 @@ msgid ""
 msgstr ""
 "Contactos habilitados para crear pedidos de abastecimiento desde el portal "
 "para la ubicación destino de este contacto."
+\n
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/controllers/portal.py:0
+msgid "Only %(free)s %(uom)s of %(product)s are available for %(location)s."
+msgstr ""
+"Solo hay %(free)s %(uom)s de %(product)s disponibles para %(location)s."

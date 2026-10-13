@@ -58,7 +58,9 @@ msgstr ""
 
 #. module: catalog_stock_request
 #: model:ir.model.fields,help:catalog_stock_request.field_stock_request__free_qty
-msgid "Free quantity in the warehouse stock location."
+msgid ""
+"Free quantity in the warehouse stock location, or in the location holding "
+"the stock set aside for the destination."
 msgstr ""
 
 #. module: catalog_stock_request
@@ -161,4 +163,12 @@ msgid ""
 "Al confirmar, el stock libre del almacén se reserva en una transferencia "
 "interna y el faltante genera RFQs agrupadas por proveedor según el ranking "
 "manual."
+msgstr ""
+
+#. module: catalog_stock_request
+#. odoo-python
+#: code:addons/catalog_stock_request/models/stock_request.py:0
+msgid ""
+"Only %(free)s %(uom)s of %(product)s are set aside for %(location)s, but "
+"%(qty)s were requested."
 msgstr ""

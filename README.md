@@ -16,6 +16,10 @@ Extiende los stock requests de Odoo para, al confirmar una orden:
   "Obra" (filtrable y agrupable) y origin enriquecido con formato
   `SRO/xxx - Ubicacion (Cliente)`. Las compras manuales o de reorden no se ven
   afectadas.
+- Stock apartado por destino: si la ubicacion destino tiene una ubicacion de
+  stock apartado (ver `stock_request_portal`), el pedido se abastece solo
+  desde ahi. No se compra nada y pedir mas de lo apartado da error al
+  confirmar.
 
 ### stock_request_portal
 
@@ -64,6 +68,14 @@ todo el flujo).
    asignacion el usuario no puede crear pedidos.
 3. Rutas: regla interna deposito -> ubicacion cliente y regla *buy* del
    deposito para que la confirmacion genere transferencias y RFQs.
+4. Stock apartado (opcional): para que las ventas a una obra aparten la
+   mercaderia y el supervisor solo pueda pedir lo apartado, cargar en el
+   contacto de la obra una **Ubicacion de cliente** interna (la "pre-obra";
+   el campo se ve en modo desarrollador). Hace falta una ruta aplicable al
+   almacen con una regla deposito -> ubicacion padre de las pre-obras para
+   que la venta genere la transferencia interna. Los pedidos del portal para
+   esa obra salen de la pre-obra (no de la ubicacion origen de la regla
+   interna), no generan compra y se rechazan si superan lo disponible ahi.
 
 ### Colores del catalogo del portal
 

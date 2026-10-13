@@ -72,8 +72,12 @@ msgstr "Libre para usar"
 
 #. module: catalog_stock_request
 #: model:ir.model.fields,help:catalog_stock_request.field_stock_request__free_qty
-msgid "Free quantity in the warehouse stock location."
-msgstr "Cantidad libre en la ubicación de stock del almacén."
+msgid ""
+"Free quantity in the warehouse stock location, or in the location holding "
+"the stock set aside for the destination."
+msgstr ""
+"Cantidad libre en la ubicación de stock del almacén, o en la ubicación que "
+"guarda el stock apartado para el destino."
 
 #. module: catalog_stock_request
 #: model:ir.model.fields,field_description:catalog_stock_request.field_stock_request__qty_reserved
@@ -181,3 +185,13 @@ msgid ""
 msgstr ""
 "Ubicación destino de la orden de solicitud que generó esta compra. Vacía "
 "para compras manuales."
+\n
+#. module: catalog_stock_request
+#. odoo-python
+#: code:addons/catalog_stock_request/models/stock_request.py:0
+msgid ""
+"Only %(free)s %(uom)s of %(product)s are set aside for %(location)s, but "
+"%(qty)s were requested."
+msgstr ""
+"Solo hay %(free)s %(uom)s de %(product)s apartados para %(location)s, pero "
+"se pidieron %(qty)s."
