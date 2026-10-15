@@ -7,7 +7,6 @@ from odoo import fields, http
 from odoo.exceptions import AccessError, MissingError
 from odoo.fields import Command
 from odoo.http import request
-from odoo.tools import float_compare
 
 from odoo.addons.portal.controllers.portal import (
     CustomerPortal,
@@ -131,9 +130,13 @@ class CustomerPortal(CustomerPortal):
     def _get_stock_request_set_aside_quantities(self, locations):
         """Return {location id: {product id: free quantity}} for the
         destination locations that have stock set aside. The catalog only
-        offers those products for them; other locations are not limited."""
+        offers them the products assigned to their set aside location (in
+        stock there or on their way to it), with the free quantity as a
+        reference: asking for more is purchased. Other locations are not
+        limited."""
         result = {}
         Quant = request.env["stock.quant"].sudo()
+        Move = request.env["stock.move"].sudo()
         for location in locations:
             source_location = location._get_stock_request_source_location()
             if not source_location:
@@ -143,11 +146,20 @@ class CustomerPortal(CustomerPortal):
                 groupby=["product_id"],
                 aggregates=["quantity:sum", "reserved_quantity:sum"],
             )
-            result[location.id] = {
-                product.id: quantity - reserved
+            quantities = {
+                product.id: max(0.0, quantity - reserved)
                 for product, quantity, reserved in groups
-                if quantity - reserved > 0
             }
+            incoming = Move._read_group(
+                [
+                    ("location_dest_id", "=", source_location.id),
+                    ("state", "!=", "cancel"),
+                ],
+                groupby=["product_id"],
+            )
+            for (product,) in incoming:
+                quantities.setdefault(product.id, 0.0)
+            result[location.id] = quantities
         return result
 
     def _get_stock_request_tz(self):
@@ -239,31 +251,21 @@ class CustomerPortal(CustomerPortal):
             )
         return lines, None
 
-    def _check_stock_request_set_aside_stock(self, location, lines):
-        """Return an error when the lines ask for more than the stock set
-        aside for the destination location. Locations without stock set
-        aside are not limited."""
-        source_location = location._get_stock_request_source_location()
-        if not source_location:
-            return None
-        precision = request.env["decimal.precision"].precision_get(
-            "Product Unit of Measure"
+    def _check_stock_request_set_aside_products(self, location, lines):
+        """Return an error when the lines ask for a product that is not
+        assigned to the stock set aside for the destination location. The
+        quantities are not limited: what is missing is purchased. Locations
+        without stock set aside are not limited."""
+        assigned = self._get_stock_request_set_aside_quantities(location).get(
+            location.id
         )
-        quantities = {}
+        if assigned is None:
+            return None
         for line in lines:
-            quantities.setdefault(line["product"], 0.0)
-            quantities[line["product"]] += line["qty"]
-        for product, qty in quantities.items():
-            free_qty = max(
-                0.0, product.with_context(location=source_location.id).free_qty
-            )
-            if float_compare(qty, free_qty, precision_digits=precision) > 0:
+            if line["product"].id not in assigned:
                 return request.env._(
-                    "Only %(free)s %(uom)s of %(product)s are available for "
-                    "%(location)s.",
-                    free=free_qty,
-                    uom=product.uom_id.name,
-                    product=product.display_name,
+                    "%(product)s is not assigned to %(location)s.",
+                    product=line["product"].display_name,
                     location=location.name,
                 )
         return None
@@ -425,7 +427,7 @@ class CustomerPortal(CustomerPortal):
         if not error:
             lines, error = self._parse_stock_request_lines(form)
         if not error:
-            error = self._check_stock_request_set_aside_stock(location, lines)
+            error = self._check_stock_request_set_aside_products(location, lines)
 
         warehouse = self._get_stock_request_warehouse()
         if not error and not warehouse:

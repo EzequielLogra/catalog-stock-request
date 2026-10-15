@@ -420,7 +420,9 @@ class TestStockRequestPortal(HttpCase):
         self.assertEqual(order.location_id, self.client_location_b)
         self.assertEqual(order.stock_request_ids.free_qty, 4)
 
-    def test_portal_order_over_set_aside_stock_fails(self):
+    def test_portal_order_over_set_aside_stock_is_allowed(self):
+        """Asking for more than the stock set aside is allowed: the missing
+        quantity is purchased when the order is confirmed."""
         product = self.env["product.product"].create(
             {"name": "Storable Product", "type": "consu", "is_storable": True}
         )
@@ -430,11 +432,51 @@ class TestStockRequestPortal(HttpCase):
             [(product, 5)], location=self.client_location_b
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn("are available for", response.text)
+        order = self.env["stock.request.order"].search(
+            [("requested_by", "=", self.portal_user.id)], limit=1
+        )
+        self.assertEqual(order.stock_request_ids.product_uom_qty, 5)
+        self.assertEqual(order.stock_request_ids.qty_to_purchase, 1)
+
+    def test_portal_order_of_product_not_set_aside_fails(self):
+        product = self.env["product.product"].create(
+            {"name": "Storable Product", "type": "consu", "is_storable": True}
+        )
+        self._set_aside_stock(self.child_partner, product, 4)
+        self.authenticate("portal_client", "P0rtalClient1!")
+        response = self._submit_order(
+            [(self.product_a, 1)], location=self.client_location_b
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("is not assigned to", response.text)
         self.assertFalse(
             self.env["stock.request.order"].search_count(
                 [("requested_by", "=", self.portal_user.id)]
             )
+        )
+
+    def test_portal_catalog_keeps_set_aside_products_without_stock(self):
+        """A product whose set aside stock ran out is still offered, with
+        zero available, so the supervisor can ask for more."""
+        product = self.env["product.product"].create(
+            {"name": "Storable Product", "type": "consu", "is_storable": True}
+        )
+        source_location = self._set_aside_stock(self.child_partner, product, 4)
+        quant = self.env["stock.quant"].search(
+            [
+                ("product_id", "=", product.id),
+                ("location_id", "=", source_location.id),
+            ]
+        )
+        quant.inventory_quantity = 0
+        quant.action_apply_inventory()
+        self.authenticate("portal_client", "P0rtalClient1!")
+        response = self.url_open("/my/stock-request-orders/new")
+        self.assertEqual(response.status_code, 200)
+        match = re.search(r'data-set-aside="([^"]*)"', response.text)
+        set_aside = json.loads(html.unescape(match.group(1)))
+        self.assertEqual(
+            set_aside, {str(self.client_location_b.id): {str(product.id): 0.0}}
         )
 
     def test_portal_location_without_set_aside_stock_is_not_limited(self):

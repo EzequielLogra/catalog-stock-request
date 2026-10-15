@@ -59,8 +59,9 @@ msgstr ""
 #. module: catalog_stock_request
 #: model:ir.model.fields,help:catalog_stock_request.field_stock_request__free_qty
 msgid ""
-"Free quantity in the warehouse stock location, or in the location holding "
-"the stock set aside for the destination."
+"Free quantity in the location holding the stock set aside for the "
+"destination, if any, plus the free quantity in the warehouse stock location "
+"(stock set aside for other destinations excluded)."
 msgstr ""
 
 #. module: catalog_stock_request
@@ -166,9 +167,22 @@ msgid ""
 msgstr ""
 
 #. module: catalog_stock_request
+#: model:ir.model.fields,field_description:catalog_stock_request.field_purchase_order_line__stock_request_source_location_id
+msgid "Set Aside Location"
+msgstr ""
+
+#. module: catalog_stock_request
+#: model:ir.model.fields,help:catalog_stock_request.field_purchase_order_line__stock_request_source_location_id
+msgid ""
+"Location holding the stock set aside for the destination of the stock "
+"requests behind this line. The products are received there and leave with "
+"the rest of the request."
+msgstr ""
+
+#. module: catalog_stock_request
 #. odoo-python
 #: code:addons/catalog_stock_request/models/stock_request.py:0
 msgid ""
-"Only %(free)s %(uom)s of %(product)s are set aside for %(location)s, but "
-"%(qty)s were requested."
+"No purchase route found to buy the %(qty)s %(uom)s of %(product)s missing in "
+"%(location)s."
 msgstr ""

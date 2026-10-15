@@ -46,17 +46,21 @@ if (linesContainer && lineTemplate) {
         })
     );
 
-    // Stock set aside per destination location, as
-    // {locationId: {productId: qty}}. A location that is not listed is
-    // not limited: it offers the whole catalog.
+    // Products assigned to the stock set aside per destination location,
+    // with their free quantity, as {locationId: {productId: qty}}. A
+    // location that is not listed is not limited: it offers the whole
+    // catalog. The quantity is a reference: asking for more is supplied
+    // from the warehouse stock or purchased.
     const setAside = JSON.parse(productGrid?.dataset.setAside || "{}");
     const cardOf = (col) => col.querySelector(".o_sr_product_card");
-    // Quantity the selected location may still request, null if unlimited.
+    // Free quantity in the set aside stock of the selected location, null
+    // if the location is not limited, undefined if the product is not
+    // assigned to it.
     const availableQty = (card) => {
         const quantities = setAside[locationSelect?.value];
-        return quantities ? quantities[card.dataset.productId] || 0 : null;
+        return quantities ? quantities[card.dataset.productId] : null;
     };
-    const isOffered = (col) => availableQty(cardOf(col)) !== 0;
+    const isOffered = (col) => availableQty(cardOf(col)) !== undefined;
     let offeredCount = productCols.length;
 
     // Show what each card offers to the selected location and recount
@@ -68,9 +72,9 @@ if (linesContainer && lineTemplate) {
             const available = availableQty(card);
             const label = card.querySelector(".o_sr_card_available");
             if (label) {
-                label.classList.toggle("d-none", available === null);
+                label.classList.toggle("d-none", available == null);
                 label.querySelector(".o_sr_card_available_qty").textContent =
-                    available === null ? "" : available;
+                    available == null ? "" : available;
             }
             if (isOffered(col)) {
                 const categoryId = card.dataset.categoryId;
@@ -314,10 +318,7 @@ if (linesContainer && lineTemplate) {
         if (!input) {
             return;
         }
-        const available = availableQty(card);
-        const qty = Math.max(1, toQty(input.value) + delta);
-        input.value =
-            available === null ? qty : Math.max(1, Math.min(qty, available));
+        input.value = Math.max(1, toQty(input.value) + delta);
         applyCardQty(card);
     };
 

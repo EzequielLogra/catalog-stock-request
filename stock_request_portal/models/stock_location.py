@@ -1,4 +1,4 @@
-from odoo import models
+from odoo import api, models
 
 
 class StockLocation(models.Model):
@@ -19,3 +19,21 @@ class StockLocation(models.Model):
             lambda location: location.usage == "internal" and location != self
         )
         return source_locations[:1] or super()._get_stock_request_source_location()
+
+    @api.model
+    def _get_stock_request_set_aside_locations(self):
+        partners = (
+            self.env["res.partner"]
+            .sudo()
+            .with_company(self.env.company)
+            .search([("stock_request_location_id", "!=", False)])
+        )
+        set_aside = self.env["stock.location"]
+        for partner in partners:
+            location = partner.property_stock_customer
+            if (
+                location.usage == "internal"
+                and location != partner.stock_request_location_id
+            ):
+                set_aside |= location
+        return set_aside | super()._get_stock_request_set_aside_locations()

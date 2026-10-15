@@ -2,6 +2,8 @@
 
 Modulos para el flujo de solicitudes de abastecimiento de grupohos (Odoo 19).
 
+Guia de uso para capacitar al equipo: [docs/CAPACITACION.md](docs/CAPACITACION.md).
+
 ## Modulos
 
 ### catalog_stock_request
@@ -17,9 +19,21 @@ Extiende los stock requests de Odoo para, al confirmar una orden:
   `SRO/xxx - Ubicacion (Cliente)`. Las compras manuales o de reorden no se ven
   afectadas.
 - Stock apartado por destino: si la ubicacion destino tiene una ubicacion de
-  stock apartado (ver `stock_request_portal`), el pedido se abastece solo
-  desde ahi. No se compra nada y pedir mas de lo apartado da error al
-  confirmar.
+  stock apartado (ver `stock_request_portal`), el pedido se cubre primero
+  con lo apartado, despues con lo libre en `WH/Stock` y solo se compra lo
+  que falta. Lo apartado mas lo comprado salen de la ubicacion apartada en
+  una transferencia (la compra se recibe ahi y completa la reserva); lo que
+  cubre `WH/Stock` sale en otra transferencia desde la ubicacion origen de
+  la ruta. Ejemplo: 30 apartados, 5 libres en `WH/Stock` y un pedido de 40
+  -> transferencia de 35 desde lo apartado (30 reservados), transferencia de
+  5 desde `WH/Stock` y compra de 5. Lo apartado incluye lo que esta en
+  camino a la ubicacion apartada (ej. la entrega de una venta a la obra
+  todavia sin validar) y descuenta lo ya prometido a otros pedidos. De
+  `WH/Stock` solo se toma lo que no tiene ningun movimiento pendiente (asi
+  la entrega de esa venta y el pedido no reservan dos veces) ni esta
+  apartado para otras obras.
+  Las compras para distintas ubicaciones apartadas no se juntan en la misma
+  linea de compra.
 
 ### stock_request_portal
 
@@ -69,16 +83,22 @@ todo el flujo).
 3. Rutas: regla interna deposito -> ubicacion cliente y regla *buy* del
    deposito para que la confirmacion genere transferencias y RFQs.
 4. Stock apartado (opcional): para que las ventas a una obra aparten la
-   mercaderia y el supervisor solo pueda pedir lo apartado, cargar en el
+   mercaderia y el supervisor pida primero lo apartado, cargar en el
    contacto de la obra una **Ubicacion de cliente** interna (la "pre-obra";
    el campo se ve en modo desarrollador). Hace falta una ruta aplicable al
    almacen con una regla deposito -> ubicacion padre de las pre-obras para
-   que la venta genere la transferencia interna. Los pedidos del portal para
-   esa obra salen de la pre-obra (no de la ubicacion origen de la regla
-   interna), no generan compra y se rechazan si superan lo disponible ahi.
-   El catalogo del portal muestra para esa obra solo los productos con
-   stock libre en su pre-obra, con la cantidad disponible; al cambiar de
-   obra se vacia el pedido en curso.
+   que la venta genere la transferencia interna. La pre-obra no puede estar
+   dentro de `WH/Stock`: si no, las entregas del deposito reservarian lo
+   apartado. Los pedidos del portal para esa obra salen de la pre-obra (no
+   de la ubicacion origen de la regla interna). Si piden mas de lo
+   disponible ahi, se usa lo libre en `WH/Stock` y recien el faltante se
+   compra y se recibe en la pre-obra (hace falta la regla *buy* del
+   deposito y un proveedor en el producto).
+   El catalogo del portal muestra para esa obra solo los productos
+   asignados a su pre-obra (con stock ahi o con algun movimiento hacia
+   ella, aunque ya no quede nada), con la cantidad disponible como
+   referencia; la cantidad no tiene tope. Al cambiar de obra se vacia el
+   pedido en curso.
    Si todas las obras del supervisor tienen pre-obra, la pagina solo
    incluye los productos apartados para ellas: el resto del catalogo no se
    envia al navegador.
