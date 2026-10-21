@@ -494,3 +494,13 @@ msgstr "Al cambiar de ubicación destino se borra el pedido actual. ¿Continuar?
 #: model_terms:ir.ui.view,arch_db:stock_request_portal.portal_stock_request_order_new
 msgid "No products are set aside for this location."
 msgstr "No hay productos apartados para esta ubicación."
+
+#. module: stock_request_portal
+#. odoo-python
+#: code:addons/stock_request_portal/models/res_partner.py:0
+msgid ""
+"%(contact)s cannot have an internal customer location (pre-obra). Create a "
+"delivery address for each obra under %(contact)s and set its pre-obra there."
+msgstr ""
+"%(contact)s no puede tener una ubicación de cliente interna (pre-obra). Cree "
+"una dirección de entrega por cada obra de %(contact)s y cargue ahí su pre-obra."

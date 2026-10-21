@@ -85,7 +85,9 @@ todo el flujo).
 4. Stock apartado (opcional): para que las ventas a una obra aparten la
    mercaderia y el supervisor pida primero lo apartado, cargar en el
    contacto de la obra una **Ubicacion de cliente** interna (la "pre-obra";
-   el campo se ve en modo desarrollador). Hace falta una ruta aplicable al
+   el campo se ve en modo desarrollador). La pre-obra va solo en
+   subcontactos (uno por obra): un contacto sin empresa padre no puede
+   tenerla. Hace falta una ruta aplicable al
    almacen con una regla deposito -> ubicacion padre de las pre-obras para
    que la venta genere la transferencia interna. La pre-obra no puede estar
    dentro de `WH/Stock`: si no, las entregas del deposito reservarian lo

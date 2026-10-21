@@ -15,10 +15,11 @@ class StockLocation(models.Model):
             .with_company(self.company_id or self.env.company)
             .search([("stock_request_location_id", "=", self.id)])
         )
-        source_locations = partners.mapped("property_stock_customer").filtered(
-            lambda location: location.usage == "internal" and location != self
-        )
-        return source_locations[:1] or super()._get_stock_request_source_location()
+        for partner in partners:
+            source_location = partner._get_stock_request_set_aside_location()
+            if source_location:
+                return source_location
+        return super()._get_stock_request_source_location()
 
     @api.model
     def _get_stock_request_set_aside_locations(self):
@@ -30,10 +31,5 @@ class StockLocation(models.Model):
         )
         set_aside = self.env["stock.location"]
         for partner in partners:
-            location = partner.property_stock_customer
-            if (
-                location.usage == "internal"
-                and location != partner.stock_request_location_id
-            ):
-                set_aside |= location
+            set_aside |= partner._get_stock_request_set_aside_location()
         return set_aside | super()._get_stock_request_set_aside_locations()

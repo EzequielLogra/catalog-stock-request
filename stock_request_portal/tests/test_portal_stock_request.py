@@ -3,6 +3,7 @@ import json
 import re
 
 from odoo import Command, fields
+from odoo.exceptions import ValidationError
 from odoo.tests import HttpCase, tagged
 
 
@@ -524,3 +525,42 @@ class TestStockRequestPortal(HttpCase):
         self.assertIn('data-product-name="Storable Product"', response.text)
         self.assertNotIn('data-product-name="Product A"', response.text)
         self.assertNotIn('data-product-name="Product B"', response.text)
+
+    def test_set_aside_location_only_on_child_contacts(self):
+        """The pre-obra goes on the contact of each obra, not on the
+        client: the client keeps the default customer location."""
+        set_aside = self.env["stock.location"].create(
+            {
+                "name": "Client set aside",
+                "usage": "internal",
+                "location_id": self.warehouse.view_location_id.id,
+            }
+        )
+        with self.assertRaises(ValidationError):
+            self.client_partner.property_stock_customer = set_aside
+        with self.assertRaises(ValidationError):
+            self.env["res.partner"].create(
+                {"name": "New Client", "property_stock_customer": set_aside.id}
+            )
+        # every obra of the client gets its own pre-obra
+        self.child_partner.property_stock_customer = set_aside
+        other_obra = self.env["res.partner"].create(
+            {
+                "name": "Hospital Client - Obra 2",
+                "type": "delivery",
+                "parent_id": self.client_partner.id,
+                "property_stock_customer": self.env["stock.location"]
+                .create(
+                    {
+                        "name": "Obra 2 set aside",
+                        "usage": "internal",
+                        "location_id": self.warehouse.view_location_id.id,
+                    }
+                )
+                .id,
+            }
+        )
+        self.assertTrue(other_obra._get_stock_request_set_aside_location())
+        # detaching an obra with pre-obra from its client is not allowed
+        with self.assertRaises(ValidationError):
+            self.child_partner.parent_id = False
