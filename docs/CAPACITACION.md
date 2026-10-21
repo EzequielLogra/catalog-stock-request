@@ -1,17 +1,19 @@
 # Capacitación: solicitudes de abastecimiento a obras
 
 Guía de uso del flujo de abastecimiento a obras en Odoo 19 (módulos
-`catalog_stock_request` y `stock_request_portal`).
+`catalog_stock_request` y `stock_request_portal`) y de las ventas a obra con
+su cuenta analítica.
 
 Está dividida por rol:
 
 1. [Conceptos](#1-conceptos) — para todos
 2. [Supervisor de obra (portal)](#2-supervisor-de-obra-portal)
 3. [Administración / depósito (backend)](#3-administración--depósito-backend)
-4. [Compras](#4-compras)
-5. [Configuración (implementador / admin)](#5-configuración-implementador--admin)
-6. [Ejemplos resueltos](#6-ejemplos-resueltos)
-7. [Preguntas frecuentes y problemas comunes](#7-preguntas-frecuentes-y-problemas-comunes)
+4. [Ventas a una obra](#4-ventas-a-una-obra)
+5. [Compras](#5-compras)
+6. [Configuración (implementador / admin)](#6-configuración-implementador--admin)
+7. [Ejemplos resueltos](#7-ejemplos-resueltos)
+8. [Preguntas frecuentes y problemas comunes](#8-preguntas-frecuentes-y-problemas-comunes)
 
 ---
 
@@ -25,6 +27,9 @@ Está dividida por rol:
 | **Supervisor** | Usuario del portal (del cliente) que pide mercadería para sus obras. |
 | **Solicitud de abastecimiento** | El pedido del supervisor. Cuando se confirma, Odoo decide de dónde sale cada unidad. |
 | **Reservar** | Comprometer unidades para una transferencia. **No mueve nada físicamente**: lo físico ocurre al validar la transferencia. |
+| **Contacto de la obra** | Contacto hijo de la empresa cliente, de tipo *Dirección de entrega*, uno por obra (ej. *AUTONAUTICA - Obra 1*). Las ventas se hacen sobre este contacto. |
+| **Cuenta analítica de la obra** | Cuenta del plan analítico **Obras**, una por obra. Junta los ingresos (y los costos imputados) de la obra para ver su resultado. |
+| **Modelo de distribución analítica** | Regla que asigna sola la cuenta analítica de la obra a cada línea de venta cuando el cliente del pedido es el contacto de esa obra. |
 
 ### Para qué sirve la pre-obra
 
@@ -139,7 +144,65 @@ deja cancelar: primero hay que cancelar esa compra.
 
 ---
 
-## 4. Compras
+## 4. Ventas a una obra
+
+Menú: **Ventas → Pedidos → Presupuestos**.
+
+### Cargar el presupuesto
+
+1. **Nuevo**.
+2. En **Cliente** elegir el **contacto de la obra** (ej. *AUTONAUTICA,
+   AUTONAUTICA - Obra 1*), **no** la empresa.
+3. Odoo completa solo:
+   - **Dirección de factura:** la empresa (ej. *AUTONAUTICA*). La factura
+     sale a nombre de la empresa, con su CUIT.
+   - **Dirección de entrega:** la obra.
+4. Agregar los productos. Cada línea trae sola la **Distribución analítica**
+   de la obra (100 % a la cuenta de la obra). No hay que cargarla a mano.
+5. **Confirmar**.
+
+| Campo | Valor |
+|---|---|
+| Cliente | Contacto de la obra |
+| Dirección de factura | Empresa (automático) |
+| Dirección de entrega | Contacto de la obra (automático) |
+| Distribución analítica (líneas) | Cuenta de la obra (automático) |
+
+> **Importante:** la analítica se asigna según el **Cliente** del pedido, no
+> según la dirección de entrega. Si se carga la empresa como cliente y la obra
+> solo como entrega, las líneas quedan **sin analítica**.
+
+El plan **Obras** es obligatorio en ventas: si una línea queda sin cuenta
+analítica, Odoo **no deja confirmar** el pedido (se puede guardar el
+presupuesto, el control es al confirmar).
+
+### Facturar
+
+La analítica pasa de la línea del pedido a la línea de la factura **en el
+momento de facturar**. Si se corrige la analítica del pedido después de
+facturar, la factura no se actualiza: hay que corregirla en la factura (si
+está en borrador) o con nota de crédito y nueva factura.
+
+### Ver el resultado por obra
+
+**Contabilidad → Informes → Estado de resultados** → opción **Analítica** →
+agrupar por el plan **Obras**. Queda una columna por obra.
+
+Otras vistas:
+
+- **Contabilidad → Informes → Gestión → Informe analítico**: saldo por cuenta
+  analítica.
+- **Contabilidad → Contabilidad → Transacciones → Apuntes analíticos**: vista
+  pivot (cuenta analítica × cuenta contable), exportable a Excel.
+
+> El inventario se valúa en forma **periódica**: la venta no genera asiento
+> de costo de mercadería. En el resultado por obra aparecen los ingresos y
+> los costos que se imputen a la obra (por ejemplo, facturas de proveedor con
+> la analítica de la obra).
+
+---
+
+## 5. Compras
 
 - Las RFQ generadas por pedidos de obra muestran la columna/campo **Obra**
   (se puede filtrar y agrupar) y en el **Origen** el formato
@@ -155,7 +218,7 @@ deja cancelar: primero hay que cancelar esa compra.
 
 ---
 
-## 5. Configuración (implementador / admin)
+## 6. Configuración (implementador / admin)
 
 ### Obra y supervisores
 
@@ -173,7 +236,10 @@ destino o quitar al supervisor.
 1. Crear una ubicación interna para la pre-obra. **No puede estar dentro de
    WH/Stock.**
 2. En el contacto de la obra, cargar esa ubicación como **Ubicación de
-   cliente** (pestaña Inventario; visible en modo desarrollador).
+   cliente** (pestaña Inventario; visible en modo desarrollador). Va siempre
+   en el **subcontacto de la obra**, nunca en la empresa: Odoo no deja
+   guardar una pre-obra en un contacto sin empresa padre. Un cliente con una
+   sola obra también necesita su subcontacto.
 3. Tener una ruta con una regla depósito → ubicación padre de las pre-obras,
    para que la venta genere la transferencia interna.
 
@@ -183,9 +249,45 @@ destino o quitar al supervisor.
 - Cada producto que se pueda comprar necesita al menos un proveedor en
   **Compra → Proveedores**.
 
+### Alta de una obra para ventas (analítica)
+
+Por cada obra nueva, después de crear el contacto hijo de la obra (ver
+[Obra y supervisores](#obra-y-supervisores)):
+
+1. **Cuenta analítica:** Contabilidad → Configuración → Contabilidad
+   analítica → **Cuentas analíticas** → Nuevo.
+   - **Nombre:** la obra (ej. *Obra 1*).
+   - **Plan:** *Obras*.
+   - **Cliente:** el contacto de la obra.
+2. **Modelo de distribución analítica:** Contabilidad → Configuración →
+   Contabilidad analítica → **Modelos de distribución analítica** → Nuevo.
+   - **Contacto:** el contacto de la obra (no la empresa).
+   - **Empresa:** la empresa que vende.
+   - **Distribución analítica:** 100 % a la cuenta de la obra.
+   - Producto, categoría y prefijo de cuentas: vacíos.
+3. Probar: crear un presupuesto con el contacto de la obra como cliente y
+   verificar que la línea traiga la analítica.
+
+> El modelo aplica a las líneas que se cargan **después** de crearlo. Las
+> líneas existentes no se recalculan solas: cambiar el producto de la línea o
+> cargar la analítica a mano.
+
+### Plan Obras obligatorio en ventas (una sola vez)
+
+Contabilidad → Configuración → Contabilidad analítica → **Planes analíticos**
+→ *Obras* → pestaña **Aplicabilidad** → agregar línea:
+
+- **Dominio:** Pedido de venta.
+- **Aplicabilidad:** Obligatorio.
+- Producto / categoría: vacíos (aplica a todo).
+
+Si se venden también cosas que no son de obra (mostrador, etc.), limitar la
+regla a una categoría de producto o crear una cuenta analítica genérica
+(*Sin obra*) para esas ventas.
+
 ---
 
-## 6. Ejemplos resueltos
+## 7. Ejemplos resueltos
 
 Todos con el mismo producto y una obra **con** pre-obra.
 
@@ -201,7 +303,7 @@ Todos con el mismo producto y una obra **con** pre-obra.
 
 ---
 
-## 7. Preguntas frecuentes y problemas comunes
+## 8. Preguntas frecuentes y problemas comunes
 
 **¿Por qué se generó una compra si "hay stock"?**
 Revisar si ese stock está comprometido: reservado para otra entrega, esperado
@@ -225,6 +327,23 @@ Verificar que en el contacto de la obra esté cargada la ubicación destino,
 que el supervisor figure en **Supervisores de solicitudes de stock** y que el
 contacto no esté archivado.
 
+**La línea de venta no trae la cuenta analítica.**
+Revisar, en este orden:
+
+1. Que el **Cliente** del pedido sea el contacto de la obra y no la empresa.
+2. Que exista el **modelo de distribución analítica** de esa obra, con ese
+   mismo contacto.
+3. Si la línea se cargó antes de crear el modelo: cambiar el producto de la
+   línea (se recalcula) o cargar la analítica a mano.
+
+**No me deja confirmar el pedido de venta: falta la distribución analítica.**
+El plan *Obras* es obligatorio en ventas. Ver la pregunta anterior.
+
+**La factura salió sin analítica.**
+La analítica se cargó en el pedido después de facturar. Corregirla en la
+factura si está en borrador; si ya está publicada, nota de crédito y nueva
+factura.
+
 **Mensajes de error al confirmar**
 
 | Mensaje | Causa | Solución |
@@ -233,4 +352,5 @@ contacto no esté archivado.
 | *La ruta … no tiene regla de compra para el almacén…* | Falta la regla *buy* del depósito. | Activar la ruta Comprar del almacén. |
 | *No se encontró ruta interna de abastecimiento…* | No hay ruta depósito → obra. | Configurar la ruta interna hacia la ubicación de la obra. |
 | *No se puede cancelar… compras confirmadas* | Hay compras ya confirmadas. | Cancelar primero esas compras. |
+| *… no puede tener una ubicación de cliente interna (pre-obra)…* | Se cargó la pre-obra en la empresa (o en un contacto sin empresa padre). | Crear el subcontacto de la obra y cargar ahí la pre-obra. |
 | *… no está asignado a …* (portal) | Se pidió un producto que no está en la pre-obra de esa obra. | Ver "El supervisor no ve un producto". |
