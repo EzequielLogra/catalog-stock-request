@@ -4,17 +4,34 @@ from odoo import api, models
 class StockLocation(models.Model):
     _inherit = "stock.location"
 
-    def _get_stock_request_source_location(self):
-        """The stock set aside for a destination location is the internal
-        customer location of the contact that owns it: sales delivered to
-        that contact move the products there."""
+    def _get_stock_request_partners(self):
+        """Contacts whose stock request destination is this location."""
         self.ensure_one()
-        partners = (
+        return (
             self.env["res.partner"]
             .sudo()
             .with_company(self.company_id or self.env.company)
             .search([("stock_request_location_id", "=", self.id)])
         )
+
+    def _get_stock_request_partner(self):
+        """The contact of the obra, set on the transfers to it: the one
+        holding its pre-obra if any, otherwise the first one."""
+        self.ensure_one()
+        partners = self._get_stock_request_partners()
+        return (
+            partners.filtered(
+                lambda partner: partner._get_stock_request_set_aside_location()
+            )[:1]
+            or partners[:1]
+        )
+
+    def _get_stock_request_source_location(self):
+        """The stock set aside for a destination location is the internal
+        customer location of the contact that owns it: sales delivered to
+        that contact move the products there."""
+        self.ensure_one()
+        partners = self._get_stock_request_partners()
         for partner in partners:
             source_location = partner._get_stock_request_set_aside_location()
             if source_location:
