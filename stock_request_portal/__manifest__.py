@@ -1,12 +1,18 @@
 {
     "name": "Stock Request Portal",
     "summary": "Allow portal users (clients) to create stock request orders from /my",
-    "version": "19.0.1.8.0",
+    "version": "19.0.1.9.0",
     "license": "LGPL-3",
     "author": "Logra",
     "category": "Warehouse Management",
     "website": "https://github.com/EzequielLogra/catalog-stock-request",
-    "depends": ["stock_request", "catalog_stock_request", "portal", "website"],
+    "depends": [
+        "stock_request",
+        "catalog_stock_request",
+        "purchase_stock",
+        "portal",
+        "website",
+    ],
     "data": [
         "views/res_partner_views.xml",
         "views/portal_templates.xml",
