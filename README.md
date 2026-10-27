@@ -71,11 +71,12 @@ todo el flujo).
 
 ## Configuracion de stock_request_portal
 
-1. En el contacto del cliente, configurar **Stock Request Destination
-   Location** (ubicacion interna/transito destino de las transferencias).
-   Para varios destinos, crear contactos hijos (tipo *entrega*) con su
-   ubicacion cada uno; el portal los muestra en el selector. Para dar de
-   baja un destino, archivar el contacto hijo o vaciar su campo.
+1. Por cada obra, crear un contacto hijo del cliente (tipo *entrega*) y
+   configurar ahi **Stock Request Destination Location** (ubicacion
+   interna/transito destino de las transferencias); el portal los muestra
+   en el selector. Para dar de baja un destino, archivar el contacto hijo o
+   vaciar su campo. Paso a paso en `docs/CAPACITACION.md` ("Alta de una obra
+   nueva").
 2. Crear el usuario portal desde el contacto del supervisor
    (Contacto -> *Conceder acceso al portal*) y agregarlo en **Stock Request
    Supervisors** de cada contacto (obra) para la que puede pedir. Sin esa

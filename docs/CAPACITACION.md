@@ -185,15 +185,15 @@ está en borrador) o con nota de crédito y nueva factura.
 
 ### Ver el resultado por obra
 
-**Contabilidad → Informes → Estado de resultados** → opción **Analítica** →
-agrupar por el plan **Obras**. Queda una columna por obra.
+En Odoo Community no está el *Estado de resultados* con columnas analíticas
+(es de Enterprise). El resultado por obra se ve en:
 
-Otras vistas:
-
-- **Contabilidad → Informes → Gestión → Informe analítico**: saldo por cuenta
-  analítica.
 - **Contabilidad → Contabilidad → Transacciones → Apuntes analíticos**: vista
-  pivot (cuenta analítica × cuenta contable), exportable a Excel.
+  **pivot** con las cuentas del plan **Obras** en columnas y la cuenta
+  contable en filas. Muestra ingresos y costos de cada obra y se exporta a
+  Excel.
+- **Contabilidad → Informes → Gestión → Informe analítico**: saldo por cuenta
+  analítica (un renglón por obra).
 
 > El inventario se valúa en forma **periódica**: la venta no genera asiento
 > de costo de mercadería. En el resultado por obra aparecen los ingresos y
@@ -220,15 +220,77 @@ Otras vistas:
 
 ## 6. Configuración (implementador / admin)
 
+### Alta de una obra nueva (paso a paso)
+
+Cada obra es un **subcontacto** de la empresa cliente. La empresa solo se usa
+para facturar: no lleva pre-obra, ubicación destino ni supervisores. Ejemplo:
+*AUTONAUTICA - Obra 2*.
+
+Una sola vez, antes de la primera obra: rutas (ver [Pre-obra](#pre-obra-opcional) y
+[Compras automáticas](#compras-automáticas)) y
+[plan Obras obligatorio en ventas](#plan-obras-obligatorio-en-ventas-una-sola-vez).
+
+**1. Crear las dos ubicaciones** — Inventario → Configuración → Ubicaciones →
+Nuevo.
+
+| Ubicación | Tipo | Ubicación padre | Para qué |
+|---|---|---|---|
+| **Obra 2** (destino) | Interna | La padre de las obras | Adonde llegan los pedidos del supervisor. |
+| **Pre-obra Obra 2** | Interna | La padre de las pre-obras, **nunca dentro de WH/Stock** | Donde queda apartado lo vendido a la obra. |
+
+**2. Crear el subcontacto de la obra** — Contactos → *AUTONAUTICA* → pestaña
+**Contactos y direcciones** → Agregar.
+
+- **Tipo:** Dirección de entrega.
+- **Nombre:** *Obra 2* (se ve como *AUTONAUTICA, Obra 2*).
+- **Dirección:** la de la obra.
+
+Guardar, abrir el subcontacto y, en **modo desarrollador**, pestaña **Ventas
+y compras**:
+
+- **Ubicación de cliente:** *Pre-obra Obra 2*.
+- **Ubicación destino de solicitudes de stock:** *Obra 2*.
+- **Supervisores de solicitudes de stock:** los supervisores de la obra.
+
+**3. Acceso al portal** — solo si el supervisor todavía no tiene usuario:
+contacto del supervisor → ⚙ Acción → **Conceder acceso al portal**. Si ya
+tiene usuario, alcanza con el paso 2: la obra nueva le aparece sola en el
+selector del portal.
+
+**4. Analítica de la obra** — ver
+[Alta de una obra para ventas](#alta-de-una-obra-para-ventas-analítica):
+cuenta analítica en el plan **Obras** y modelo de distribución con el
+**subcontacto** como contacto.
+
+**5. Probar**
+
+1. Ventas → Nuevo presupuesto con **Cliente** *AUTONAUTICA, Obra 2*:
+   factura a nombre de AUTONAUTICA, entrega a la Obra 2 y la línea con la
+   analítica *Obra 2*.
+2. Confirmar: la entrega tiene que ir de **WH/Stock → Pre-obra Obra 2**.
+3. Entrar al portal con el supervisor: aparece *Obra 2* en el selector y el
+   catálogo muestra solo lo apartado en su pre-obra.
+
+**Errores típicos**
+
+- **Venta con la empresa como cliente:** no aparta en la pre-obra ni asigna
+  la analítica; como el plan Obras es obligatorio, no deja confirmar.
+- **Pre-obra cargada en la empresa:** Odoo no deja guardar.
+- **Modelo analítico creado después de cargar las líneas:** esas líneas no se
+  recalculan; cambiar el producto o cargar la analítica a mano.
+- **El supervisor no ve la obra:** falta agregarlo en *Supervisores* del
+  subcontacto.
+
 ### Obra y supervisores
 
-1. En el contacto del cliente (o un contacto hijo tipo *entrega* por cada
-   obra) cargar **Ubicación destino de solicitudes de stock**.
-2. En el mismo contacto, cargar **Supervisores de solicitudes de stock**.
+1. En el **subcontacto de la obra** (tipo *Dirección de entrega*, uno por
+   obra) cargar **Ubicación destino de solicitudes de stock**. No se carga en
+   la empresa.
+2. En el mismo subcontacto, cargar **Supervisores de solicitudes de stock**.
 3. Dar acceso al portal al supervisor (Contacto → *Conceder acceso al
    portal*).
 
-Para dar de baja una obra: archivar el contacto hijo, vaciar la ubicación
+Para dar de baja una obra: archivar el subcontacto, vaciar la ubicación
 destino o quitar al supervisor.
 
 ### Pre-obra (opcional)
