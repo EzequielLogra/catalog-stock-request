@@ -138,17 +138,69 @@ class StockRequest(models.Model):
             qty -= self._get_location_uncommitted_qty(location)
         return max(0.0, qty)
 
-    def _get_set_aside_free_qty(self):
+    def _get_set_aside_unbacked_moves(self, source_location):
+        """Pending moves bringing the product to the set aside location from
+        elsewhere in the warehouse that cannot be fully reserved (e.g. the
+        delivery of a sale to the pre-obra while there is no stock). Moves
+        chained to another pending move (e.g. a receipt) are on their way."""
+        self.ensure_one()
+        return self.env["stock.move"].search(
+            [
+                ("product_id", "=", self.product_id.id),
+                ("location_dest_id", "child_of", source_location.id),
+                ("location_id.usage", "=", "internal"),
+                ("state", "in", ("confirmed", "partially_available")),
+            ]
+        ).filtered(
+            lambda m: not (m.location_id.parent_path or "").startswith(
+                source_location.parent_path
+            )
+            and not m.move_orig_ids.filtered(
+                lambda o: o.state not in ("done", "cancel")
+            )
+        )
+
+    def _get_set_aside_unbacked_qty(self, source_location):
+        """Quantity on its way to the set aside location without stock to
+        send it."""
+        self.ensure_one()
+        qty = 0.0
+        for move in self._get_set_aside_unbacked_moves(source_location):
+            reserved = move.product_uom._compute_quantity(
+                move.quantity, move.product_id.uom_id, rounding_method="HALF-UP"
+            )
+            qty += max(0.0, move.product_qty - reserved)
+        return qty
+
+    def _get_set_aside_split(self):
         """Quantity set aside for the destination not promised to another
-        request yet: what is in the set aside location plus what is on its
-        way to it (e.g. a sale whose delivery is not validated yet), minus
-        what pending transfers are going to take from it."""
+        request yet, split into what is in the set aside location or on its
+        way with stock to send it, and what is on its way without stock (it
+        has to be purchased for the pending transfer to bring it). What
+        pending transfers are going to take from the location is deducted
+        from the first part, then from the second."""
         self.ensure_one()
         source_location = self._get_source_location()
         if not source_location:
-            return 0.0
+            return 0.0, 0.0
         product = self.product_id.with_context(location=source_location.id)
-        return max(0.0, self._to_request_uom(product.virtual_available))
+        unbacked = self._get_set_aside_unbacked_qty(source_location)
+        covered = product.virtual_available - unbacked
+        if covered < 0.0:
+            unbacked += covered
+            covered = 0.0
+        return (
+            self._to_request_uom(covered),
+            self._to_request_uom(max(0.0, unbacked)),
+        )
+
+    def _get_set_aside_free_qty(self):
+        """Quantity set aside for the destination that is in the set aside
+        location or on its way with stock to send it (e.g. a sale whose
+        delivery is reserved but not validated yet), minus what pending
+        transfers are going to take from it."""
+        self.ensure_one()
+        return self._get_set_aside_split()[0]
 
     def _get_free_qty(self):
         self.ensure_one()
@@ -245,7 +297,10 @@ class StockRequest(models.Model):
             values,
         )
 
-    def _get_purchase_procurement(self, qty, purchase_route):
+    def _get_purchase_procurement(self, qty, purchase_route, to_set_aside=True):
+        """Purchase of the missing quantity. It is received in the set aside
+        location unless to_set_aside is False, in which case it is received
+        where the buy rule puts it (the warehouse stock)."""
         self.ensure_one()
         seller = self._get_seller(qty)
         if not seller:
@@ -271,6 +326,8 @@ class StockRequest(models.Model):
         values = self._prepare_procurement_values()
         values["route_ids"] = purchase_route
         values["supplierinfo_id"] = seller
+        if not to_set_aside:
+            values.pop("stock_request_source_location_id", None)
         return self.env["stock.rule"].Procurement(
             self.product_id,
             qty,
@@ -284,8 +341,10 @@ class StockRequest(models.Model):
 
     def _get_supply_split(self):
         """Split the requested quantity into what the stock set aside for
-        the destination covers, what the warehouse stock covers and what is
-        missing, in that order of priority."""
+        the destination covers, what is set aside without stock to send it
+        (to be purchased for the pending transfer to the set aside location),
+        what the warehouse stock covers and what is missing, in that order of
+        priority."""
         self.ensure_one()
         precision = self.env["decimal.precision"].precision_get(
             "Product Unit of Measure"
@@ -297,59 +356,82 @@ class StockRequest(models.Model):
                 return 0.0
             return qty
 
+        set_aside_covered, set_aside_unbacked = self._get_set_aside_split()
         remaining = self.product_uom_qty
-        qty_set_aside = take(remaining, self._get_set_aside_free_qty())
+        qty_set_aside = take(remaining, set_aside_covered)
         remaining -= qty_set_aside
+        qty_unbacked = take(remaining, set_aside_unbacked)
+        remaining -= qty_unbacked
         qty_warehouse = take(remaining, self._get_warehouse_free_qty())
         remaining -= qty_warehouse
         if float_compare(remaining, 0.0, precision_digits=precision) <= 0:
             remaining = 0.0
-        return qty_set_aside, qty_warehouse, remaining
+        return qty_set_aside, qty_unbacked, qty_warehouse, remaining
 
     def _get_qty_from_stock_and_to_purchase(self):
         """Split the requested quantity into what the free stock covers and
         what is missing."""
         self.ensure_one()
-        qty_set_aside, qty_warehouse, qty_to_purchase = self._get_supply_split()
-        return qty_set_aside + qty_warehouse, qty_to_purchase
+        qty_set_aside, qty_unbacked, qty_warehouse, qty_to_purchase = (
+            self._get_supply_split()
+        )
+        return qty_set_aside + qty_warehouse, qty_unbacked + qty_to_purchase
 
     def _launch_reserved_procurement(self):
         """Supply the request from the stock set aside for its destination
-        and, when it is not enough, from the free warehouse stock. Only the
-        quantity neither covers is purchased; it is received in the set aside
-        location and leaves from there with the stock set aside."""
+        and, when it is not enough, from the free warehouse stock. What is
+        set aside without stock to send it is purchased and received in the
+        warehouse stock, where the pending transfer to the set aside location
+        takes it. The quantity nothing covers is purchased and received in
+        the set aside location. Both leave from there with the stock set
+        aside."""
         self.ensure_one()
-        qty_set_aside, qty_warehouse, qty_to_purchase = self._get_supply_split()
+        source_location = self._get_source_location()
+        # Stock that arrived since the transfer to the set aside location was
+        # confirmed is not purchased again.
+        self._get_set_aside_unbacked_moves(source_location)._action_assign()
+        qty_set_aside, qty_unbacked, qty_warehouse, qty_to_purchase = (
+            self._get_supply_split()
+        )
         procurements = []
-        if qty_set_aside or qty_to_purchase:
+        if qty_set_aside or qty_unbacked or qty_to_purchase:
             procurements.append(
-                self._get_supply_procurement(qty_set_aside + qty_to_purchase)
+                self._get_supply_procurement(
+                    qty_set_aside + qty_unbacked + qty_to_purchase
+                )
             )
         if qty_warehouse:
             procurements.append(
                 self._get_supply_procurement(qty_warehouse, from_set_aside=False)
             )
-        if qty_to_purchase:
+        if qty_unbacked or qty_to_purchase:
             purchase_route = self._get_purchase_route()
             if not purchase_route:
                 raise UserError(
                     self.env._(
                         "No purchase route found to buy the %(qty)s %(uom)s "
                         "of %(product)s missing in %(location)s.",
-                        qty=qty_to_purchase,
+                        qty=qty_unbacked + qty_to_purchase,
                         uom=self.product_uom_id.name,
                         product=self.product_id.display_name,
-                        location=self._get_source_location().display_name,
+                        location=source_location.display_name,
                     )
                 )
-            procurements.append(
-                self._get_purchase_procurement(qty_to_purchase, purchase_route)
-            )
+            if qty_unbacked:
+                procurements.append(
+                    self._get_purchase_procurement(
+                        qty_unbacked, purchase_route, to_set_aside=False
+                    )
+                )
+            if qty_to_purchase:
+                procurements.append(
+                    self._get_purchase_procurement(qty_to_purchase, purchase_route)
+                )
         self.env["stock.rule"].run(procurements)
         self.write(
             {
                 "qty_from_stock": qty_set_aside + qty_warehouse,
-                "qty_purchased": qty_to_purchase,
+                "qty_purchased": qty_unbacked + qty_to_purchase,
             }
         )
 

@@ -16,10 +16,12 @@ class StockRequest(models.Model):
             procurement.values["partner_id"] = partner.id
         return procurement
 
-    def _get_purchase_procurement(self, qty, purchase_route):
+    def _get_purchase_procurement(self, qty, purchase_route, to_set_aside=True):
         """The purchase of the missing quantity is charged to the obra, with
         the analytic distribution its sales get."""
-        procurement = super()._get_purchase_procurement(qty, purchase_route)
+        procurement = super()._get_purchase_procurement(
+            qty, purchase_route, to_set_aside=to_set_aside
+        )
         distribution = self._get_obra_analytic_distribution()
         if distribution:
             procurement.values["stock_request_analytic_distribution"] = (

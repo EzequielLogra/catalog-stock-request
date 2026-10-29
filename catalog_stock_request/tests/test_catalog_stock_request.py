@@ -519,6 +519,112 @@ class TestSplitPurchase(TestStockRequestPurchase):
             second.action_confirm()
         self.assertEqual(second.stock_request_ids.qty_purchased, 3.0)
 
+    def test_set_aside_without_stock_to_send_is_purchased_for_it(self):
+        """What is on its way to the set aside location without stock to
+        send it (a sale to the pre-obra while there is no stock) is purchased
+        when a request asks for it, and received in the warehouse stock,
+        where the pending transfer to the set aside location takes it."""
+        source_location = self._create_set_aside_location()
+        with self._patch_source_location(source_location):
+            delivery = self._send_to_set_aside(source_location, 3.0)
+            self.assertEqual(delivery.state, "confirmed")
+            order = self._create_order(
+                {"product_id": self.product.id, "product_uom_qty": 3.0}
+            )
+            request = order.stock_request_ids
+            self.assertEqual(request.free_qty, 0.0)
+            self.assertEqual(request.qty_to_purchase, 3.0)
+            order.action_confirm()
+            self.assertEqual(request.qty_from_stock, 0.0)
+            self.assertEqual(request.qty_purchased, 3.0)
+            move = order.picking_ids.move_ids
+            self.assertEqual(len(move), 1)
+            self.assertEqual(move.location_id, source_location)
+            self.assertEqual(move.product_uom_qty, 3.0)
+            purchase = request.sudo().purchase_ids
+            self.assertEqual(purchase.order_line.product_qty, 3.0)
+            self.assertFalse(
+                purchase.order_line.stock_request_source_location_id
+            )
+            receipt = self._receive(purchase)
+            self.assertEqual(
+                receipt.move_ids.location_dest_id, self.warehouse.lot_stock_id
+            )
+            self.assertEqual(delivery.state, "assigned")
+            delivery.move_ids.picked = True
+            delivery.button_validate()
+            order.picking_ids.action_assign()
+        self.assertEqual(move.quantity, 3.0)
+
+    def test_set_aside_partly_without_stock_to_send(self):
+        """Only the part of the pending transfer to the set aside location
+        that has no stock to send it is purchased for it."""
+        source_location = self._create_set_aside_location()
+        self._set_stock(self.product, 2.0)
+        with self._patch_source_location(source_location):
+            delivery = self._send_to_set_aside(source_location, 5.0)
+            self.assertEqual(delivery.move_ids.quantity, 2.0)
+            order = self._create_order(
+                {"product_id": self.product.id, "product_uom_qty": 5.0}
+            )
+            order.action_confirm()
+        request = order.stock_request_ids
+        self.assertEqual(request.qty_from_stock, 2.0)
+        self.assertEqual(request.qty_purchased, 3.0)
+        self.assertEqual(order.picking_ids.move_ids.product_uom_qty, 5.0)
+        line = request.sudo().purchase_ids.order_line
+        self.assertEqual(line.product_qty, 3.0)
+        self.assertFalse(line.stock_request_source_location_id)
+
+    def test_set_aside_without_stock_to_send_is_purchased_once(self):
+        """A second request does not purchase again what a previous request
+        already purchased for the pending transfer: it purchases its own
+        missing quantity, received in the set aside location."""
+        source_location = self._create_set_aside_location()
+        with self._patch_source_location(source_location):
+            self._send_to_set_aside(source_location, 3.0)
+            first = self._create_order(
+                {"product_id": self.product.id, "product_uom_qty": 3.0}
+            )
+            first.action_confirm()
+            second = self._create_order(
+                {"product_id": self.product.id, "product_uom_qty": 2.0}
+            )
+            second.action_confirm()
+        first_line = first.stock_request_ids.sudo().purchase_ids.order_line
+        second_request = second.stock_request_ids
+        self.assertEqual(second_request.qty_purchased, 2.0)
+        lines = second_request.sudo().purchase_ids.order_line.filtered(
+            lambda line: line.stock_request_source_location_id
+        )
+        self.assertEqual(lines.product_qty, 2.0)
+        self.assertEqual(lines.stock_request_source_location_id, source_location)
+        self.assertEqual(
+            sum(
+                first_line.filtered(
+                    lambda line: not line.stock_request_source_location_id
+                ).mapped("product_qty")
+            ),
+            3.0,
+        )
+
+    def test_set_aside_stock_arrived_after_the_transfer_is_not_purchased(self):
+        """Stock that reached the warehouse after the transfer to the set
+        aside location was confirmed is reserved for it, not purchased."""
+        source_location = self._create_set_aside_location()
+        with self._patch_source_location(source_location):
+            delivery = self._send_to_set_aside(source_location, 3.0)
+            self._set_stock(self.product, 3.0)
+            order = self._create_order(
+                {"product_id": self.product.id, "product_uom_qty": 3.0}
+            )
+            order.action_confirm()
+        request = order.stock_request_ids
+        self.assertEqual(delivery.state, "assigned")
+        self.assertEqual(request.qty_from_stock, 3.0)
+        self.assertEqual(request.qty_purchased, 0.0)
+        self.assertFalse(request.sudo().purchase_ids)
+
     def test_warehouse_stock_excludes_stock_set_aside_inside_it(self):
         """Stock set aside for a destination, kept in a child location of
         the warehouse stock, is not free for other destinations."""
