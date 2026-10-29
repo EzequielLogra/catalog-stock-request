@@ -576,6 +576,30 @@ class TestSplitPurchase(TestStockRequestPurchase):
         self.assertEqual(line.product_qty, 3.0)
         self.assertFalse(line.stock_request_source_location_id)
 
+    def test_set_aside_without_stock_to_send_and_missing_quantity(self):
+        """In the same request, what is set aside without stock is received
+        in the warehouse stock and the rest in the set aside location: the
+        two purchases are not merged in one line."""
+        source_location = self._create_set_aside_location()
+        with self._patch_source_location(source_location):
+            self._send_to_set_aside(source_location, 3.0)
+            order = self._create_order(
+                {"product_id": self.product.id, "product_uom_qty": 4.0}
+            )
+            order.action_confirm()
+        request = order.stock_request_ids
+        self.assertEqual(request.qty_purchased, 4.0)
+        lines = request.sudo().purchase_ids.order_line
+        self.assertEqual(len(lines), 2)
+        to_stock = lines.filtered(
+            lambda line: not line.stock_request_source_location_id
+        )
+        self.assertEqual(to_stock.product_qty, 3.0)
+        self.assertEqual((lines - to_stock).product_qty, 1.0)
+        self.assertEqual(
+            (lines - to_stock).stock_request_source_location_id, source_location
+        )
+
     def test_set_aside_without_stock_to_send_is_purchased_once(self):
         """A second request does not purchase again what a previous request
         already purchased for the pending transfer: it purchases its own

@@ -1,8 +1,16 @@
-from odoo import models
+from odoo import api, models
 
 
 class StockRule(models.Model):
     _inherit = "stock.rule"
+
+    @api.model
+    def _get_procurements_to_merge_groupby(self, procurement):
+        """Purchases received in the set aside location are not merged with
+        the ones received in the warehouse stock."""
+        return super()._get_procurements_to_merge_groupby(procurement) + (
+            procurement.values.get("stock_request_source_location_id") or False,
+        )
 
     def _get_stock_move_values(
         self,
