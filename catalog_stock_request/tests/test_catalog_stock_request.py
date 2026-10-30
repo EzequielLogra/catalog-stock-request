@@ -563,6 +563,104 @@ class TestSplitPurchase(TestStockRequestPurchase):
         self.assertEqual(request.qty_done, 3.0)
         self.assertEqual(request.state, "done")
 
+    def _request_set_aside(self, source_location, qty):
+        order = self._create_order(
+            {"product_id": self.product.id, "product_uom_qty": qty}
+        )
+        order.action_confirm()
+        return order, order.stock_request_ids.sudo().purchase_ids
+
+    def test_set_aside_receipt_goes_to_own_transfer_not_the_oldest(self):
+        """The purchase of a request supplies the pending transfer of its
+        destination even if the transfer of another one is older."""
+        other_location = self._create_set_aside_location()
+        source_location = self._create_set_aside_location()
+        with self._patch_source_location(source_location):
+            other = self._send_to_set_aside(other_location, 1.0)
+            delivery = self._send_to_set_aside(source_location, 1.0)
+            __, purchase = self._request_set_aside(source_location, 1.0)
+            receipt = self._receive(purchase)
+        self.assertEqual(receipt.move_ids.product_uom_qty, 1.0)
+        self.assertEqual(
+            receipt.move_ids.location_dest_id, self.warehouse.lot_stock_id
+        )
+        self.assertEqual(delivery.state, "assigned")
+        self.assertEqual(delivery.move_ids.quantity, 1.0)
+        self.assertEqual(other.state, "confirmed")
+        self.assertEqual(other.move_ids.quantity, 0.0)
+
+    def test_set_aside_stock_left_goes_to_the_other_transfer(self):
+        """Stock received beyond the chained moves stays free for the other
+        transfers waiting for the product."""
+        other_location = self._create_set_aside_location()
+        source_location = self._create_set_aside_location()
+        with self._patch_source_location(source_location):
+            other = self._send_to_set_aside(other_location, 1.0)
+            delivery = self._send_to_set_aside(source_location, 1.0)
+            __, purchase = self._request_set_aside(source_location, 1.0)
+            purchase.order_line.product_qty = 2.0
+            self._receive(purchase)
+        self.assertEqual(delivery.state, "assigned")
+        self.assertEqual(other.state, "assigned")
+        self.assertEqual(other.move_ids.quantity, 1.0)
+
+    def test_set_aside_partial_request_receives_what_was_purchased(self):
+        """A request for part of the pending transfer receives only what it
+        purchased: the rest of the transfer keeps waiting."""
+        source_location = self._create_set_aside_location()
+        with self._patch_source_location(source_location):
+            delivery = self._send_to_set_aside(source_location, 5.0)
+            __, purchase = self._request_set_aside(source_location, 2.0)
+            self.assertEqual(purchase.order_line.product_qty, 2.0)
+            receipt = self._receive(purchase)
+        self.assertEqual(sum(receipt.move_ids.mapped("product_uom_qty")), 2.0)
+        moves = delivery.move_ids
+        self.assertEqual(sum(moves.mapped("product_uom_qty")), 5.0)
+        self.assertEqual(sum(moves.mapped("quantity")), 2.0)
+        self.assertEqual(delivery.state, "assigned")
+
+    def test_set_aside_partly_reserved_transfer_chains_what_is_missing(self):
+        source_location = self._create_set_aside_location()
+        self._set_stock(self.product, 2.0)
+        with self._patch_source_location(source_location):
+            delivery = self._send_to_set_aside(source_location, 5.0)
+            order, purchase = self._request_set_aside(source_location, 5.0)
+            self.assertEqual(purchase.order_line.product_qty, 3.0)
+            receipt = self._receive(purchase)
+        self.assertEqual(sum(receipt.move_ids.mapped("product_uom_qty")), 3.0)
+        self.assertEqual(sum(delivery.move_ids.mapped("quantity")), 5.0)
+        self.assertEqual(delivery.state, "assigned")
+        self.assertEqual(order.stock_request_ids.qty_purchased, 3.0)
+
+    def test_set_aside_second_request_buys_what_the_first_did_not(self):
+        """A chained purchase covers only its quantity: the rest of the
+        pending transfer is purchased by the next request."""
+        source_location = self._create_set_aside_location()
+        with self._patch_source_location(source_location):
+            delivery = self._send_to_set_aside(source_location, 3.0)
+            __, first = self._request_set_aside(source_location, 1.0)
+            __, second = self._request_set_aside(source_location, 2.0)
+            self.assertEqual(
+                sum((first | second).order_line.mapped("product_qty")), 3.0
+            )
+            for purchase in first | second:
+                self._receive(purchase)
+        self.assertEqual(sum(delivery.move_ids.mapped("quantity")), 3.0)
+
+    def test_set_aside_cancelled_purchase_is_purchased_again(self):
+        source_location = self._create_set_aside_location()
+        with self._patch_source_location(source_location):
+            delivery = self._send_to_set_aside(source_location, 1.0)
+            order, purchase = self._request_set_aside(source_location, 1.0)
+            purchase.button_cancel()
+            order.action_cancel()
+            self.assertEqual(delivery.move_ids.state, "confirmed")
+            __, new_purchase = self._request_set_aside(source_location, 1.0)
+            self.assertNotEqual(new_purchase, purchase)
+            self.assertEqual(new_purchase.order_line.product_qty, 1.0)
+            self._receive(new_purchase)
+        self.assertEqual(delivery.state, "assigned")
+
     def test_set_aside_partly_without_stock_to_send(self):
         """Only the part of the pending transfer to the set aside location
         that has no stock to send it is purchased for it."""

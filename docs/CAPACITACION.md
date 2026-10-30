@@ -204,9 +204,12 @@ En Odoo Community no está el *Estado de resultados* con columnas analíticas
 
 ## 5. Compras
 
-- Las RFQ generadas por pedidos de obra muestran la columna/campo **Obra**
-  (se puede filtrar y agrupar) y en el **Origen** el formato
-  `SRO/xxx - Ubicación (Cliente)`.
+- Las RFQ generadas por pedidos de obra muestran en el **Origen** el formato
+  `SRO/xxx - Ubicación (Cliente)`. Una compra puede mezclar obras: cada línea
+  lleva la cuenta analítica de la suya, que es la que imputa el costo.
+- Lo que se compra para una entrega a pre-obra sin stock queda atado a esa
+  entrega: al recibirlo se reserva para esa obra, aunque otra obra espere el
+  mismo producto desde antes.
 - El proveedor se elige por **Ranking de proveedor** (campo en el contacto
   del proveedor: menor número = más prioridad, 0 = sin prioridad) y, a
   igualdad, por la secuencia en las tarifas de proveedor del producto.
