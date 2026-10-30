@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.stock_request_portal</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="stock_request.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='stock_request']" position="inside">
+                <setting
+                    help="Show portal users the free quantity set aside for each product in the catalog."
+                    class="text-muted"
+                >
+                    <field name="stock_request_portal_show_available" />
+                </setting>
+            </xpath>
+        </field>
+    </record>
+</odoo>

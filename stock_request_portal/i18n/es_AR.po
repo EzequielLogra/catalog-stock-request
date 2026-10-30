@@ -504,3 +504,22 @@ msgid ""
 msgstr ""
 "%(contact)s no puede tener una ubicación de cliente interna (pre-obra). Cree "
 "una dirección de entrega por cada obra de %(contact)s y cargue ahí su pre-obra."
+
+#. module: stock_request_portal
+#: model:ir.model,name:stock_request_portal.model_res_config_settings
+msgid "Config Settings"
+msgstr "Ajustes de configuración"
+
+#. module: stock_request_portal
+#: model:ir.model.fields,field_description:stock_request_portal.field_res_config_settings__stock_request_portal_show_available
+msgid "Show Available Quantity in Portal"
+msgstr "Mostrar cantidad disponible en el portal"
+
+#. module: stock_request_portal
+#: model_terms:ir.ui.view,arch_db:stock_request_portal.res_config_settings_view_form
+msgid ""
+"Show portal users the free quantity set aside for each product in the "
+"catalog."
+msgstr ""
+"Muestra a los usuarios del portal la cantidad libre apartada de cada producto "
+"en el catálogo."

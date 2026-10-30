@@ -50,7 +50,8 @@ if (linesContainer && lineTemplate) {
     // with their free quantity, as {locationId: {productId: qty}}. A
     // location that is not listed is not limited: it offers the whole
     // catalog. The quantity is a reference: asking for more is supplied
-    // from the warehouse stock or purchased.
+    // from the warehouse stock or purchased. It is null when the settings
+    // do not show it.
     const setAside = JSON.parse(productGrid?.dataset.setAside || "{}");
     const cardOf = (col) => col.querySelector(".o_sr_product_card");
     // Free quantity in the set aside stock of the selected location, null
