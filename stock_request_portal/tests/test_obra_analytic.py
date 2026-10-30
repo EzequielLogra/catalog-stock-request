@@ -132,6 +132,76 @@ class TestObraAnalytic(TransactionCase):
             {(1, str(self.account_1.id)), (1, str(self.account_2.id))},
         )
 
+    def _set_pre_obra(self, obra):
+        pre_obra = self.env["stock.location"].create(
+            {
+                "name": f"Pre-obra {obra.name}",
+                "usage": "internal",
+                "location_id": self.warehouse.view_location_id.id,
+            }
+        )
+        obra._get_stock_request_partner().property_stock_customer = pre_obra
+        return pre_obra
+
+    def _send_to_pre_obra(self, pre_obra):
+        """Pending transfer of the warehouse stock to the pre-obra, as the
+        delivery of a sale to the obra with no stock to send it."""
+        picking = self.env["stock.picking"].create(
+            {
+                "picking_type_id": self.warehouse.int_type_id.id,
+                "location_id": self.warehouse.lot_stock_id.id,
+                "location_dest_id": pre_obra.id,
+                "move_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "product_id": self.product.id,
+                            "product_uom_qty": 1,
+                            "product_uom": self.product.uom_id.id,
+                            "location_id": self.warehouse.lot_stock_id.id,
+                            "location_dest_id": pre_obra.id,
+                        },
+                    )
+                ],
+            }
+        )
+        picking.action_confirm()
+        return picking
+
+    def test_grouped_purchase_supplies_each_obra(self):
+        """A purchase mixing obras: each one is charged its line and gets its
+        units, whichever transfer is older."""
+        delivery_1 = self._send_to_pre_obra(self._set_pre_obra(self.obra_1))
+        delivery_2 = self._send_to_pre_obra(self._set_pre_obra(self.obra_2))
+        order_2 = self._create_order(self.obra_2, 1)
+        order_1 = self._create_order(self.obra_1, 1)
+        order_2.action_confirm()
+        order_1.action_confirm()
+        lines = self._purchase_lines(order_1, order_2)
+        purchase = lines.order_id
+        self.assertEqual(len(purchase), 1)
+        self.assertEqual(len(lines), 2)
+        purchase.button_confirm()
+        receipt = purchase.picking_ids
+        self.assertEqual(sum(receipt.move_ids.mapped("product_uom_qty")), 2)
+        # Only the unit of obra 2 arrives: obra 1, older, does not take it.
+        line_2 = self._purchase_lines(order_2)
+        for move in receipt.move_ids:
+            move.quantity = 1 if move.purchase_line_id == line_2 else 0
+        receipt.move_ids.filtered("quantity").picked = True
+        receipt.with_context(skip_backorder=True).button_validate()
+        self.assertEqual(delivery_2.state, "assigned")
+        self.assertEqual(delivery_1.move_ids.quantity, 0)
+        self.assertEqual(
+            line_2.analytic_distribution, {str(self.account_2.id): 100}
+        )
+        # The unit of obra 1 arrives on the backorder.
+        backorder = receipt.backorder_ids
+        backorder.move_ids.picked = True
+        backorder.button_validate()
+        self.assertEqual(delivery_1.state, "assigned")
+
     def test_same_obra_merged_in_one_line(self):
         order_1 = self._create_order(self.obra_1, 1)
         order_2 = self._create_order(self.obra_1, 1)

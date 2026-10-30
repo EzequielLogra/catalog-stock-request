@@ -149,7 +149,7 @@ class StockRequest(models.Model):
                 ("product_id", "=", self.product_id.id),
                 ("location_dest_id", "child_of", source_location.id),
                 ("location_id.usage", "=", "internal"),
-                ("state", "in", ("confirmed", "partially_available")),
+                ("state", "in", ("waiting", "confirmed", "partially_available")),
             ]
         ).filtered(
             lambda m: not (m.location_id.parent_path or "").startswith(
@@ -159,6 +159,39 @@ class StockRequest(models.Model):
                 lambda o: o.state not in ("done", "cancel")
             )
         )
+
+    def _get_set_aside_moves_to_chain(self, source_location, qty):
+        """Pending moves to the set aside location the purchase of qty (in
+        the unit of the request) has to supply, oldest first. A move that
+        needs less than it asks for is split: the receipt of a purchase
+        asks for what its chained moves ask for, not for what was purchased."""
+        self.ensure_one()
+        uom = self.product_id.uom_id
+        qty = self.product_uom_id._compute_quantity(
+            qty, uom, rounding_method="HALF-UP"
+        )
+        chained = self.env["stock.move"]
+        moves = self._get_set_aside_unbacked_moves(source_location).sorted(
+            lambda move: (move.date, move.id)
+        )
+        for move in moves:
+            if uom.compare(qty, 0.0) <= 0:
+                break
+            reserved = move.product_uom._compute_quantity(
+                move.quantity, uom, rounding_method="HALF-UP"
+            )
+            missing = move.product_qty - reserved
+            if uom.compare(missing, 0.0) <= 0:
+                continue
+            take = min(qty, missing)
+            if uom.compare(take, move.product_qty) < 0:
+                new_move = self.env["stock.move"].create(move._split(take))
+                new_move._action_confirm(merge=False)
+                move._recompute_state()
+                move = new_move
+            chained |= move
+            qty -= take
+        return chained
 
     def _get_set_aside_unbacked_qty(self, source_location):
         """Quantity on its way to the set aside location without stock to
@@ -418,11 +451,17 @@ class StockRequest(models.Model):
                     )
                 )
             if qty_unbacked:
-                procurements.append(
-                    self._get_purchase_procurement(
-                        qty_unbacked, purchase_route, to_set_aside=False
+                # Chained so that the receipt supplies this destination and
+                # not the oldest transfer waiting for the product.
+                procurement = self._get_purchase_procurement(
+                    qty_unbacked, purchase_route, to_set_aside=False
+                )
+                procurement.values["move_dest_ids"] = (
+                    self._get_set_aside_moves_to_chain(
+                        source_location, qty_unbacked
                     )
                 )
+                procurements.append(procurement)
             if qty_to_purchase:
                 procurements.append(
                     self._get_purchase_procurement(qty_to_purchase, purchase_route)
