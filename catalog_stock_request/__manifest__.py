@@ -1,7 +1,7 @@
 {
     "name": "Catalog Stock Request",
     "summary": "Partial stock reservation and purchase split for stock requests",
-    "version": "19.0.1.7.1",
+    "version": "19.0.1.7.2",
     "license": "LGPL-3",
     "author": "Logra",
     "category": "Warehouse Management",

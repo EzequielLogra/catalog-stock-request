@@ -91,4 +91,19 @@ class PurchaseOrderLine(models.Model):
         if self.stock_request_source_location_id:
             for vals in res:
                 vals.pop("allocation_ids", None)
+            return res
+        # Purchases of what is set aside without stock are received in the
+        # warehouse stock, but the requests behind them are fulfilled from
+        # the set aside location as well.
+        set_aside_requests = self.stock_request_ids.filtered(
+            lambda request: request._get_source_location()
+        )
+        if set_aside_requests:
+            for vals in res:
+                vals["allocation_ids"] = [
+                    command
+                    for command in vals.get("allocation_ids", [])
+                    if command[2].get("stock_request_id")
+                    not in set_aside_requests.ids
+                ]
         return res

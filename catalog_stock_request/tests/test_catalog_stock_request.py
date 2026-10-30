@@ -550,11 +550,18 @@ class TestSplitPurchase(TestStockRequestPurchase):
             self.assertEqual(
                 receipt.move_ids.location_dest_id, self.warehouse.lot_stock_id
             )
+            # The receipt does not count as progress of the request.
+            self.assertEqual(request.qty_done, 0.0)
+            self.assertEqual(request.state, "open")
             self.assertEqual(delivery.state, "assigned")
             delivery.move_ids.picked = True
             delivery.button_validate()
             order.picking_ids.action_assign()
         self.assertEqual(move.quantity, 3.0)
+        order.picking_ids.move_ids.picked = True
+        order.picking_ids.button_validate()
+        self.assertEqual(request.qty_done, 3.0)
+        self.assertEqual(request.state, "done")
 
     def test_set_aside_partly_without_stock_to_send(self):
         """Only the part of the pending transfer to the set aside location
