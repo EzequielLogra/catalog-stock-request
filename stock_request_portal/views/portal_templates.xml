@@ -278,9 +278,11 @@
                                                 Ref: <t t-out="product.default_code" />
                                             </div>
                                             <!-- Only for locations with stock set
-                                                 aside; the client updates it when the
+                                                 aside and if enabled in the settings;
+                                                 the client updates it when the
                                                  location changes. -->
                                             <div
+                                                t-if="show_available"
                                                 t-attf-class="o_sr_card_available #{'d-none' if default_available is None else ''}"
                                             >
                                                 Available: <span

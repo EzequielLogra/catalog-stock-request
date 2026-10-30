@@ -162,6 +162,15 @@ class CustomerPortal(CustomerPortal):
             result[location.id] = quantities
         return result
 
+    def _get_stock_request_show_available(self):
+        """Whether the catalog shows the free quantity of the set aside
+        stock (Settings > Stock Request)."""
+        return bool(
+            request.env["ir.config_parameter"]
+            .sudo()
+            .get_param("stock_request_portal.show_available")
+        )
+
     def _get_stock_request_tz(self):
         """Timezone in which the portal user reads and types dates."""
         return pytz.timezone(
@@ -195,8 +204,17 @@ class CustomerPortal(CustomerPortal):
             if default_available is None or product.id in default_available
         ]
         per_page = self._stock_request_products_per_page
+        show_available = self._get_stock_request_show_available()
+        # The client only needs the assigned products to filter the catalog,
+        # so the quantities do not reach the page unless they are shown.
+        if not show_available:
+            set_aside = {
+                location_id: dict.fromkeys(quantities)
+                for location_id, quantities in set_aside.items()
+            }
         values.update(
             {
+                "show_available": show_available,
                 "page_name": "stock_request_order_new",
                 "error": error,
                 "products": products,

@@ -380,6 +380,11 @@ class TestStockRequestPortal(HttpCase):
             )
         )
 
+    def _show_available(self):
+        self.env["ir.config_parameter"].sudo().set_param(
+            "stock_request_portal.show_available", True
+        )
+
     def _set_aside_stock(self, partner, product, qty):
         """Give the contact an internal customer location (where its sales
         are delivered) holding the given quantity."""
@@ -471,6 +476,7 @@ class TestStockRequestPortal(HttpCase):
         )
         quant.inventory_quantity = 0
         quant.action_apply_inventory()
+        self._show_available()
         self.authenticate("portal_client", "P0rtalClient1!")
         response = self.url_open("/my/stock-request-orders/new")
         self.assertEqual(response.status_code, 200)
@@ -500,15 +506,34 @@ class TestStockRequestPortal(HttpCase):
             {"name": "Storable Product", "type": "consu", "is_storable": True}
         )
         self._set_aside_stock(self.child_partner, product, 4)
+        self._show_available()
         self.authenticate("portal_client", "P0rtalClient1!")
         response = self.url_open("/my/stock-request-orders/new")
         self.assertEqual(response.status_code, 200)
+        self.assertIn("o_sr_card_available_qty", response.text)
         match = re.search(r'data-set-aside="([^"]*)"', response.text)
         self.assertTrue(match, "Set aside quantities not found in page")
         set_aside = json.loads(html.unescape(match.group(1)))
         # only the location with stock set aside is limited
         self.assertEqual(
             set_aside, {str(self.client_location_b.id): {str(product.id): 4.0}}
+        )
+
+    def test_portal_catalog_hides_set_aside_quantities_by_default(self):
+        """Without the setting the quantities do not reach the page, but
+        the catalog is still limited to the products set aside."""
+        product = self.env["product.product"].create(
+            {"name": "Storable Product", "type": "consu", "is_storable": True}
+        )
+        self._set_aside_stock(self.child_partner, product, 4)
+        self.authenticate("portal_client", "P0rtalClient1!")
+        response = self.url_open("/my/stock-request-orders/new")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("o_sr_card_available_qty", response.text)
+        match = re.search(r'data-set-aside="([^"]*)"', response.text)
+        set_aside = json.loads(html.unescape(match.group(1)))
+        self.assertEqual(
+            set_aside, {str(self.client_location_b.id): {str(product.id): None}}
         )
 
     def test_portal_catalog_only_renders_set_aside_products(self):
