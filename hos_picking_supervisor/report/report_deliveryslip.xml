@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_delivery_document" inherit_id="l10n_ar_stock_ux.report_delivery_document">
+        <!-- Debajo de los datos de la obra: a quién se le entrega. -->
+        <xpath expr="//div[@id='informations']/div[1]" position="inside">
+            <t t-if="o.supervisor_id">
+                <br/>
+                <strong>Entregado a (supervisor): </strong>
+                <span t-field="o.supervisor_id.name"/>
+            </t>
+        </xpath>
+        <!-- Firma hecha en pantalla: debajo va el supervisor, no la obra. -->
+        <xpath expr="//div[@name='signature']/div[@t-if='o.partner_id.name']" position="attributes">
+            <attribute name="t-if">o.partner_id.name and not o.supervisor_id</attribute>
+        </xpath>
+        <xpath expr="//div[@name='signature']" position="inside">
+            <div t-if="o.supervisor_id" class="offset-8 text-center">
+                <p t-field="o.supervisor_id.name"/>
+            </div>
+        </xpath>
+    </template>
+
+</odoo>

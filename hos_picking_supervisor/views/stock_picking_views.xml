@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_picking_form" model="ir.ui.view">
+        <field name="name">stock.picking.form.hos.supervisor</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <!-- Firma en pantalla también en los traslados internos a obra (Odoo
+                 nativo solo la muestra en entregas), a nombre del supervisor. -->
+            <xpath expr="//header/button[@name='do_print_picking']" position="before">
+                <widget name="signature" string="Firmar"
+                        invisible="not id or picking_type_code != 'internal' or not supervisor_id or is_signed"
+                        full_name="supervisor_id" groups="stock.group_stock_sign_delivery"/>
+            </xpath>
+            <field name="picking_type_id" position="before">
+                <field name="allowed_supervisor_ids" invisible="1"/>
+                <field name="supervisor_id"
+                       invisible="picking_type_code == 'incoming'"
+                       readonly="state == 'cancel'"
+                       options="{'no_create': True}"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="vpicktree" model="ir.ui.view">
+        <field name="name">stock.picking.list.hos.supervisor</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.vpicktree"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="supervisor_id" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_picking_internal_search" model="ir.ui.view">
+        <field name="name">stock.picking.search.hos.supervisor</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_internal_search"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="supervisor_id"/>
+            </field>
+            <filter name="backorder" position="after">
+                <separator/>
+                <filter name="without_supervisor" string="Sin supervisor"
+                        domain="[('picking_type_code', '=', 'internal'), ('supervisor_id', '=', False), ('state', '!=', 'cancel')]"/>
+            </filter>
+            <xpath expr="//search/group" position="inside">
+                <filter name="group_supervisor" string="Supervisor" context="{'group_by': 'supervisor_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
